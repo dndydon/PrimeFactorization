@@ -5,33 +5,17 @@ import Foundation
 
 //: Prime Factorization & All Factorization
 
-/// Given a positive integer, find its prime factors.
-///
-/// - parameter number: The number to be factored.
-///
-/// - returns: Array of prime factors, lowest to highest
-///
-/// - TODO: Use a less-naive algorithm. Construct the result lazily.
-// Reimplement this
-public func primeFactorsOf(_ number: Int) -> [Int] {
-  if number < 4 {
-    return [number]
+
+/// Given a positive integer, find all the prime numbers up to it
+/// - Parameter limit: up to Int.max
+/// - Returns: array of prime numbers less than limit
+public func primeNumbersBelow(_ limit: Int) -> [Int] {
+  var result: [Int] = []
+  for val in stride(from: 2, to: limit, by: 1) {
+    if val.isPrime { result.append(val) }
   }
-  let lim = Int(sqrt(Double(number)))
-  for x in 2...lim {
-    if number % x == 0 {
-      var result = [x]
-      result.append(contentsOf: (primeFactorsOf(number / x)))
-      return result
-    }
-  }
-  return [number] // lowest to highest
+  return result
 }
-
-
-//public func primeNumbersBelow(_ limit: Int) -> [Int] {
-// return [2,3,5,7,11,13,17,19,23]
-//}
 
 /// Array of prime integer factors - property on Int
 ///
@@ -39,46 +23,48 @@ public func primeFactorsOf(_ number: Int) -> [Int] {
 ///
 /// - returns: Array of integers that are the prime factors of self.
 ///
-public extension Int { // bug: why is this not available to the previews?
+public extension Int {
   var primeFactors: [Int] {
     return primeFactorsOf(self)
-
-    //    switch self {
-    //      case ...1:  // negative numbers, zero, and one don't have prime factors, for various reasons
-    //        return [self]
-    //      case 2...3:
-    //        return [self]
-    //      default:    // even numbers and mod 3 numbers are composite
-    //
-    //        // upper bound for exiting the while loop below
-    //        let maximumPossibleDivisor = Int(sqrt(Double(self)))
-    //
-    //        let primeArray = maximumPossibleDivisor.primeFactors //primeNumbersBelow(maximumPossibleDivisor)
-    //        let factorPositions = primeArray.map { divisor in  //self % $0 == 0 } // [true, true, false, false...]
-    //          if self % divisor == 0 {
-    //            var result = [divisor]
-    //            result.append(contentsOf: (self / divisor).primeFactors)
-    //            return result
-    //          }
-    //        }
-    //
-    //        // instead of just checking all odd numbers... up to maximumPossibleDivisor
-    //        // start at 5 (after handling 2 & 3, above), jump by 6... to 11, 17, 23, 29, 35...
-    //        // check self (which is odd) and the next odd number (2 up) ??
-    //        // bail if either divides evenly, otherwise keep going up 6
-    //        var divisor = 5
-    //        while (divisor <= maximumPossibleDivisor) {
-    //          if self % divisor == 0 || self % (divisor + 2) == 0 {
-    //            print(self, divisor)
-    //            return false
-    //          }
-    //          divisor += 6
-    //        }
-    //
-    //        return true
-    //    }
   }
 }
+
+public extension Int {
+  /// Prime Factors of a given integer
+  ///
+  /// - Parameter number: given integer
+  /// 
+  /// - Returns: array of integers
+  func primeFactorsOf(_ number: Int) -> [Int] {
+    guard number > 3 else { return [number] }
+    // upper bound for exiting the for loop below
+    let maxDivisor = Int(sqrt(Double(number)))
+    if maxDivisor < 5 {
+      for littleCheck in stride(from: 2, to: 5, by: 1) {
+        //print("littleCheck", littleCheck)
+        if number % littleCheck == 0 {
+          var resultFactors = [littleCheck]
+          resultFactors.append(contentsOf: (primeFactorsOf(number / littleCheck)))
+          return resultFactors
+        }
+      }
+    } else {
+        for jump6Value in stride(from: 5, through: maxDivisor, by: 6) {
+          print("maxDivisor: \(maxDivisor)")
+          for check in [2,3,4,jump6Value, jump6Value + 2] {
+            print("checking \(check)")
+            if number % check == 0 {
+              var resultFactors = [check]
+              resultFactors.append(contentsOf: (primeFactorsOf(number / check)))
+              return resultFactors
+            }
+          }
+        }
+      }
+    return [number]
+    }
+}
+
 
 /// Boolean property on Int
 ///
@@ -128,16 +114,16 @@ public extension Int {
         }
 
         // upper bound for exiting the while loop below
-        let maximumPossibleDivisor = Int(sqrt(Double(self)))
+        let maxDivisor = Int(sqrt(Double(self)))
 
-        // instead of just checking all odd numbers... up to maximumPossibleDivisor
+        // instead of just checking all odd numbers... up to maxDivisor
         // start at 5 (after handling 2 & 3, above), jump by 6... to 11, 17, 23, 29, 35...
         // check self (which is odd) and the next odd number (2 up) ??
         // bail if either divides evenly, otherwise keep going up 6
         var divisor = 5
-        while (divisor <= maximumPossibleDivisor) {
+        while (divisor <= maxDivisor) {
           if self % divisor == 0 || self % (divisor + 2) == 0 {
-            print(self, divisor)
+            //print(self, divisor)
             return false
           }
           divisor += 6
