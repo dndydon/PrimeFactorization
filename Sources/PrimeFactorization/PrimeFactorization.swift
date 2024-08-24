@@ -51,34 +51,43 @@ public extension Int {
   /// - Parameter number: the given integer
   ///
   /// - Returns: array of integers
-  /// A more efficient version of isPrime uses the fact that all prime numbers,
-  /// other than 2 and 3 can all be written as 6X - 1 or 6X + 1:
   /// See: https://primes.utm.edu/notes/faq/six.html
   /// Source: https://stackoverflow.com/questions/53022927/uilabel-doesnt-refresh-at-every-calculation/53023939#53023939
-  ///
+  /// - Note: This needs rewriting. Two loops?? Branches??
+  ///          Recursive. written as 6X - 1 or 6X + 1
   func primeFactorsOf(_ number: Int) -> [Int] {
+
+    // takes care of negative numbers, 0, 1, 2, 3 and just returns the input as array
+    // negative numbers, zero, and one don't have prime factors, for various reasons
+    // 2 and 3 are their prime factors. Skip this if number is 4...
     guard number > 3 else { return [number] }
 
-    // upper bound for exiting the for loop below
+
+    // upper bound for efficiently exiting the loops(!) and branching
     let maxDivisor = Int(sqrt(Double(number)))
+
     let jumpBy = (maxDivisor < 5) ? 1 : 6
 
     var resultFactors = [Int]()
+
+    // func krell(number) -> (upperLimit,
+    // if number < 25
     if maxDivisor < 5 {
-      smallStrideBy1: for littleCheck in stride(from: 2, through: maxDivisor, by: jumpBy) {
-        if number % littleCheck == 0 {
-          resultFactors = [littleCheck]
-          resultFactors.append(contentsOf: (primeFactorsOf(number / littleCheck)))
+      // for littleDivisor in stride(from: 2, through: maxDivisor, by: jumpBy) {
+      for littleDivisor in [2,3] {
+        if number % littleDivisor == 0 {
+          resultFactors = [littleDivisor]
+          resultFactors.append(contentsOf: (primeFactorsOf(number / littleDivisor)))
           return resultFactors
         }
       }
     }
 
     for jumpDivisor in stride(from: 5, through: maxDivisor, by: jumpBy) {
-      largeStrideBy6: for check in [2, 3, jumpDivisor, jumpDivisor + 2] {
-        if number % check == 0 {
-          resultFactors = [check]
-          resultFactors.append(contentsOf: (primeFactorsOf(number / check)))
+      for bigDivisor in [2, 3, jumpDivisor, jumpDivisor + 2] {
+        if number % bigDivisor == 0 {
+          resultFactors = [bigDivisor]
+          resultFactors.append(contentsOf: (primeFactorsOf(number / bigDivisor)))
           return resultFactors
         }
       }
@@ -86,6 +95,7 @@ public extension Int {
     resultFactors = [number]
     return resultFactors  //[number]
   }
+
 }
 
 
@@ -101,7 +111,8 @@ public extension Int {
 /// Source: https://stackoverflow.com/questions/53022927/uilabel-doesnt-refresh-at-every-calculation/53023939#53023939
 ///
 public extension Int {
-  var isPrime2: Bool {
+  var isPrime: Bool {
+    // takes care of negative*, 0, 1 and just returns false
     guard self >= 2 else { return false }
     if self < 4       { return true }
     if self % 2 == 0  { return false }
@@ -132,7 +143,7 @@ public extension Int {
 /// Source: https://stackoverflow.com/questions/53022927/uilabel-doesnt-refresh-at-every-calculation/53023939#53023939
 ///
 //public func isPrime(_ n: Int) -> Bool {
-//  return n.isPrime2 // isPrime
+//  return n.isPrime // isPrime
 //}
 
 
@@ -142,6 +153,7 @@ public extension Int {
 /// See: https://primes.utm.edu/notes/faq/six.html
 /// Source: https://stackoverflow.com/questions/53022927/uilabel-doesnt-refresh-at-every-calculation/53023939#53023939
 ///
+/*
 public extension Int {
   var isPrime: Bool {
     switch self {
@@ -173,6 +185,7 @@ public extension Int {
     }
   }
 }
+ */
 
 /// Use our self.primeFactors to return the largest or smallest Prime Factor of self
 /// We are guaranteed that primeFactors returns at least one Int, so we can force unwrap

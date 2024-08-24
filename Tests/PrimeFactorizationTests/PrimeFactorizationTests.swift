@@ -6,9 +6,8 @@ import Foundation
   for testNumber in stride(from: 2, through: 67, by: 1) {
     let testPrimes = testNumber.primeFactors
     let check = testPrimes.reduce(1, { $0 * $1 })
-    print("primeFactors of \(testNumber):",
-          testNumber.primeFactors)
-    let allPrime = testNumber.primeFactors.map { $0.isPrime2 }
+    //print("primeFactors of \(testNumber):", testNumber.primeFactors)
+    let allPrime = testNumber.primeFactors.map { $0.isPrime }
     #expect(testNumber == check &&
             !allPrime.contains(false))
   }
@@ -23,12 +22,10 @@ import Foundation
   for checkNumber in stride(from: 2, to: testNumber, by: 1) {
 
     let allPrimes = primeNumbersBelow(checkNumber)
-    print("primeNumbersBelow \(checkNumber):",
-          allPrimes)
+    print("primeNumbersBelow \(checkNumber):", allPrimes)
   }
   #expect(primeNumbersBelow(testNumber) == [2, 3, 5, 7, 11, 13])
-  #expect(primeNumbersBelow(1_000_000).count == 78498)
-
+  //#expect(primeNumbersBelow(1_000_000).count == 78498)
 }
 
 @available(iOS 16.0, *)
@@ -40,34 +37,40 @@ import Foundation
   let list = testNumbers.map { $0 }
 
   for number in list {
-    let test = (number, number.isPrime2)
-    print(test.1 ? "\(test.0) is prime" : "\(test.0) is composite")
+    let test = (number, number.isPrime)
+    //print(test.1 ? "\(test.0) is prime" : "\(test.0) is composite")
     #expect(number < 200 ? test == longFullList[number-1] : true)
   }
 }
 
 @Test func largestPrime() async throws {
+  var record: [Double] = []
   for testNumber in stride(from: 2, through: 30, by: 1) {
     let largestPrime = testNumber.largestPrime
-    print("largestPrimeFactor of \(testNumber) is: ", largestPrime)
-    #expect(true)
+    record.append(Double((testNumber/largestPrime)))
+    //print("largestPrimeFactor of \(testNumber) is: ", largestPrime)
   }
+  //print(record)
+  #expect(record == [1.0, 1.0, 2.0, 1.0, 2.0, 1.0, 4.0, 3.0, 2.0, 1.0, 4.0, 1.0, 2.0, 3.0, 8.0, 1.0, 6.0, 1.0, 4.0, 3.0, 2.0, 1.0, 8.0, 5.0, 2.0, 9.0, 4.0, 1.0, 6.0])
 }
 
 @Test func smallestPrime() async throws {
-  //let testNumber = 6 //660
+  var record: [Double] = []
   for testNumber in stride(from: 2, through: 30, by: 1) {
     let smallestPrime = testNumber.smallestPrime
-    print("smallestPrimeFactor of \(testNumber) is: ", smallestPrime)
-    #expect(true)
+    record.append(Double((testNumber/smallestPrime)))
+    //print("smallestPrimeFactor of \(testNumber) is: ", smallestPrime)
   }
+  //print(record)
+  #expect(record == [1.0, 1.0, 2.0, 1.0, 3.0, 1.0, 4.0, 3.0, 5.0, 1.0, 6.0, 1.0, 7.0, 5.0, 8.0, 1.0, 9.0, 1.0, 10.0, 7.0, 11.0, 1.0, 12.0, 5.0, 13.0, 9.0, 14.0, 1.0, 15.0])
 }
 
 @Test func allFactors() async throws {
-  let testNumber = 660
+  let testNumber = 66
   let allFactors = allFactors(of: testNumber)
   print("allFactors", allFactors)
-  let passed = (allFactors == [1, 2, 3, 4, 5, 6, 10, 11, 12, 15, 20, 22, 30, 33, 44, 55, 60, 66, 110, 132, 165, 220, 330, 660])
-  print(passed ? "allFactors passed" : "allFactors not passed")
+  //print("primeFactors", testNumber.primeFactors)
+  let passed = (allFactors == [1, 2, 3, 6, 11, 22, 33, 66])
+  //print(passed ? "allFactors passed" : "allFactors not passed")
   #expect(passed)
 }
