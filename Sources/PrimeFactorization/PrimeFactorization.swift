@@ -106,7 +106,7 @@ public extension Int {
 /// - returns: Bool whether self is prime.
 ///
 /// A more efficient version of isPrime uses the fact that all prime numbers,
-/// other than 2 and 3 can all be written as 6X - 1 or 6X + 1:
+/// other than 2 and 3 can all be written as mod 6X - 1 or mod 6X + 1
 /// See: https://primes.utm.edu/notes/faq/six.html
 /// Source: https://stackoverflow.com/questions/53022927/uilabel-doesnt-refresh-at-every-calculation/53023939#53023939
 ///
@@ -121,41 +121,25 @@ public extension Int {
     let jumpBy = (maxDivisor < 5) ? 2 : 6
     for jumpDivisor in stride(from: 5, through: maxDivisor, by: jumpBy) {
       for check in [jumpDivisor, jumpDivisor + 2] {
-        // print( self, check )
         if self % check == 0 {
           return false
         }
       }
     }
-    return true // not hit
+    return true // never hit
   }
 }
 
-/// Given an integer, return true it is prime, or not.
+
 ///
-/// - property: isPrime.
-///
-/// - returns: Bool whether self is prime.
-///
-/// A more efficient version of isPrime uses the fact that all prime numbers,
+/// A different (slightly slower) version of isPrime uses the fact that all prime numbers,
 /// other than 2 and 3 can all be written as 6X - 1 or 6X + 1:
 /// See: https://primes.utm.edu/notes/faq/six.html
 /// Source: https://stackoverflow.com/questions/53022927/uilabel-doesnt-refresh-at-every-calculation/53023939#53023939
 ///
-//public func isPrime(_ n: Int) -> Bool {
-//  return n.isPrime // isPrime
-//}
 
-
-///
-/// A more efficient version of isPrime uses the fact that all prime numbers,
-/// other than 2 and 3 can all be written as 6X - 1 or 6X + 1:
-/// See: https://primes.utm.edu/notes/faq/six.html
-/// Source: https://stackoverflow.com/questions/53022927/uilabel-doesnt-refresh-at-every-calculation/53023939#53023939
-///
-/*
 public extension Int {
-  var isPrime: Bool {
+  var isPrime2: Bool {
     switch self {
       case ...1:  // negative numbers, zero, and one are not prime, for various reasons
         return false
@@ -169,7 +153,7 @@ public extension Int {
         // upper bound for exiting the while loop below
         let maxDivisor = Int(sqrt(Double(self)))
 
-        // instead of just checking all odd divisor numbers... up to maxDivisor
+        // instead of just checking ALL odd divisor numbers... up to maxDivisor
         // start at 5 (after handling 2 & 3), jump by 6... to 11, 17, 23, 29, 35...
         // check self % divisor (which is odd) and divisor + 2
         // bail if either divides evenly, otherwise keep going up 6
@@ -185,7 +169,7 @@ public extension Int {
     }
   }
 }
- */
+
 
 /// Use our self.primeFactors to return the largest or smallest Prime Factor of self
 /// We are guaranteed that primeFactors returns at least one Int, so we can force unwrap
