@@ -6,33 +6,6 @@ import Foundation
 //: Prime Factorization & All Factorization
 
 
-/// Given a positive integer, find all the prime numbers up to it
-///
-/// - Parameter integer: up to Int.max
-///
-/// - Returns: array of all prime numbers less than limit
-///             not the prime factors of limit
-///
-public func primeNumbersBelow(_ integer: Int) -> [Int] {
-  var result: [Int] = []
-  let maxValue = 1_000_000
-  switch integer {
-    case ...1:
-      print("must be greater than 1")
-    case 2: // 2 is the only even prime
-      return [2]
-    case 3...maxValue: // only check up to maxValue
-      result.append(2)
-      // all primes above 2 are odd
-      for val in stride(from: 3, through: integer, by: 2) {
-        if val.isPrime { result.append(val) }
-      }
-    default: // don't compute primes above 1_000_000
-      print("\(integer) number is too big")
-  }
-  return result
-}
-
 /// Array of prime integer factors - property on Int
 ///
 /// - property: primeFactors.
@@ -70,7 +43,6 @@ public extension Int {
 
     var resultFactors = [Int]()
 
-    // func krell(number) -> (upperLimit,
     // if number < 25
     if maxDivisor < 5 {
       // for littleDivisor in stride(from: 2, through: maxDivisor, by: jumpBy) {
@@ -101,7 +73,7 @@ public extension Int {
 
 /// Boolean property on Int
 ///
-/// - property: isPrime. Renamed to remove it from service (see new one below)
+/// - computed property: isPrime. (see alternate implementation below)
 ///
 /// - returns: Bool whether self is prime.
 ///
@@ -205,4 +177,31 @@ public func allFactors(of n: Int) -> [Int] {
     j -= 1
   }
   return factors
+}
+
+/// Given a positive integer, find all the prime numbers below and up to it
+///
+/// - Parameter integer: up to Int.max
+///
+/// - Returns: array of all prime numbers less than or equal to limit
+///             NOT the prime factors of limit
+///
+public func primeNumbersBelow(_ integer: Int) -> [Int] {
+  var result: [Int] = []
+  let maxValue = 1_000_000
+  switch integer {
+    case ...1:
+      print("must be greater than 1")
+    case 2: // 2 is the only even prime
+      return [2]
+    case 3...maxValue: // only check up to maxValue
+      result.append(2)
+      // all primes above 2 are odd
+      for val in stride(from: 3, through: integer, by: 2) {
+        if val.isPrime { result.append(val) }
+      }
+    default: // don't compute primes above 1_000_000
+      print("\(integer) number is too big")
+  }
+  return result
 }
