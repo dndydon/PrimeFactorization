@@ -4,15 +4,15 @@
 This package provides public functions and Int extensions for Prime Factorization & All Factorization of Integers.
 
 1. Public extensions on Integer
-  - var _**.primeFactors**_: [Int]
-  - func _**.primeFactorsOf**_(_ number: Int) -> [Int]
-  - var _**.isPrime**_: Bool
-  - var _**.isPrime2**_: Bool //alternate implementation
-  - var _**.largestPrime**_: Int
+  **.primeFactors**: [Int]
+  **.primeFactorsOf**(_ number: Int) -> [Int]
+  **.isPrime**: Bool
+  **.isPrime2**: Bool
+  **.largestPrime**: Int
 
 2. *Public functions:*
-  - _**primeNumbersBelow(_ integer: Int)**_ -> [Int]
-  - _**allFactors(of n: Int)**_ -> [Int]
+  **primeNumbersBelow(_ integer: Int)** -> [Int]
+  **allFactors(of n: Int)** -> [Int]
 
 ## How to Use
 Add this as a Package
