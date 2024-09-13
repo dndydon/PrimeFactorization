@@ -19,5 +19,5 @@ This package provides public functions and Int extensions for Prime Factorizatio
 Add this as a Swift Package. See Tests for usage examples.
 
 ## License
-Open.
+MIT License.  Copyright (c) 2024 Don Sleeter
 

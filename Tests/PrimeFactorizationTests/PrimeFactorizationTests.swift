@@ -6,26 +6,28 @@ import Foundation
   for testNumber in stride(from: 2, through: 67, by: 1) {
     let testPrimes = testNumber.primeFactors
     let check = testPrimes.reduce(1, { $0 * $1 })
-    //print("primeFactors of \(testNumber):", testNumber.primeFactors)
+    print("primeFactors of \(testNumber):", testNumber.primeFactors)
     let allPrime = testNumber.primeFactors.map { $0.isPrime }
     #expect(testNumber == check &&
             !allPrime.contains(false))
   }
 }
 
-@Test func primeNumbersBelow() async throws {
-  #expect(primeNumbersBelow(1_000_001) == [])
-  #expect(primeNumbersBelow(-1) == [])
-  #expect(primeNumbersBelow(0) == [])
-  #expect(primeNumbersBelow(1) == [])
-  let testNumber = 13
-  for checkNumber in stride(from: 2, to: testNumber, by: 1) {
+@Test func primeNumbersUpTo() async throws {
+  #expect(primeNumbersUpTo(1_000_001) == [])
+  #expect(primeNumbersUpTo(-1) == [])
+  #expect(primeNumbersUpTo(0) == [])
+  #expect(primeNumbersUpTo(1) == [])
+  let testNumber = 31
+  for checkNumber in stride(from: 2, through: testNumber, by: 1) {
 
-    let allPrimes = primeNumbersBelow(checkNumber)
+    let allPrimes = primeNumbersUpTo(checkNumber)
     print("primeNumbersBelow \(checkNumber):", allPrimes)
   }
-  #expect(primeNumbersBelow(testNumber) == [2, 3, 5, 7, 11, 13])
-  //#expect(primeNumbersBelow(1_000_000).count == 78498)
+  #expect(primeNumbersUpTo(73) == [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73])
+
+  /// https://www.mathematical.com/primes0to1000k.html
+  //#expect(primeNumbersUpTo(1_000_000).count == 78498)
 }
 
 @available(iOS 16.0, *)
@@ -38,7 +40,7 @@ import Foundation
 
   for number in list {
     let test = (number, number.isPrime)
-    //print(test.1 ? "\(test.0) is prime" : "\(test.0) is composite")
+    print(test.1 ? "\(test.0) is prime" : "\(test.0) is composite")
     #expect(number < 200 ? test == longFullList[number-1] : true)
   }
 }

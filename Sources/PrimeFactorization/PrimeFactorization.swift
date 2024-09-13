@@ -14,6 +14,7 @@ import Foundation
 ///
 public extension Int {
   var primeFactors: [Int] {
+    //return newPrimeFactorsOf(self)  EXPERIMENTAL  why so slow??
     return primeFactorsOf(self)
   }
 }
@@ -46,7 +47,7 @@ public extension Int {
     // if number < 25
     if maxDivisor < 5 {
       // for littleDivisor in stride(from: 2, through: maxDivisor, by: jumpBy) {
-      for littleDivisor in [2,3] {
+      for littleDivisor in [2, 3] {
         if number % littleDivisor == 0 {
           resultFactors = [littleDivisor]
           resultFactors.append(contentsOf: (primeFactorsOf(number / littleDivisor)))
@@ -68,6 +69,39 @@ public extension Int {
     return resultFactors  //[number]
   }
 
+
+  /// Prime Factors of a given integer
+  ///
+  /// - Parameter number: the given integer
+  ///
+  /// - Returns: array of integers (prime factors) in low to high order
+  ///
+  /// The prime factors of a number are:
+  /// 1. factors (evenly divide that number and multiply to that number)
+  /// 2. returned as a short sequence (not a set) of prime numbers chosen from
+  /// 3. the set of primes below the square root of that number
+  func newPrimeFactorsOf(_ number: Int) -> [Int] {
+
+    // upper bound for prime factors
+    let maxPrime = Int(sqrt(Double(number)))
+
+    // memoize this set? // assuming any order?
+    let potentialPrimes = primeNumbersUpTo(maxPrime) // this could be a lookup
+
+    var resultFactors = [Int]()
+
+    for checkDivisor in potentialPrimes {
+      if number % checkDivisor == 0 {
+        resultFactors = [checkDivisor]
+        resultFactors.append(contentsOf: (newPrimeFactorsOf(number / checkDivisor)))
+        return resultFactors
+      }
+    }
+
+    resultFactors = [number]
+    return resultFactors
+  }
+
 }
 
 
@@ -84,13 +118,13 @@ public extension Int {
 ///
 public extension Int {
   var isPrime: Bool {
-    // takes care of negative*, 0, 1 and just returns false
-    guard self >= 2 else { return false }
+
+    guard self >= 2 else { return false } // negative*, 0, 1 just returns false
     if self < 4       { return true }
     if self % 2 == 0  { return false }
     if self % 3 == 0  { return false }
-    let maxDivisor = Int(sqrt(Double(self))) // upper bound for divisor
-    let jumpBy = (maxDivisor < 5) ? 2 : 6
+    let maxDivisor = Int(sqrt(Double(self))) // divisor upper bound for self
+    let jumpBy = (maxDivisor < 5) ? 2 : 6    // jump by 2 below 25, jump by 6 above 25
     for jumpDivisor in stride(from: 5, through: maxDivisor, by: jumpBy) {
       for check in [jumpDivisor, jumpDivisor + 2] {
         if self % check == 0 {
@@ -126,9 +160,9 @@ public extension Int {
         let maxDivisor = Int(sqrt(Double(self)))
 
         // instead of just checking ALL odd divisor numbers... up to maxDivisor
-        // start at 5 (after handling 2 & 3), jump by 6... to 11, 17, 23, 29, 35...
-        // check self % divisor (which is odd) and divisor + 2
-        // bail if either divides evenly, otherwise keep going up 6
+        // start at divisor = 5 (after handling 2 & 3), jump by 6... to 11, 17, 23, 29, 35...
+        // check self % divisor (which is odd) and self % divisor + 2 (the next odd)
+        // return false (not prime) if either divides evenly, otherwise keep going up 6
         var divisor = 5
         while (divisor <= maxDivisor) {
           if self % divisor == 0 || self % (divisor + 2) == 0 {
@@ -179,29 +213,33 @@ public func allFactors(of n: Int) -> [Int] {
   return factors
 }
 
-/// Given a positive integer, find all the prime numbers below and up to it
+/// Given a positive integer, find all the prime numbers up to it
 ///
-/// - Parameter integer: up to Int.max
+/// - Parameter integer: up to Int.max, but set a maxValue for performance
 ///
 /// - Returns: array of all prime numbers less than or equal to limit
 ///             NOT the prime factors of limit
 ///
-public func primeNumbersBelow(_ integer: Int) -> [Int] {
-  var result: [Int] = []
-  let maxValue = 1_000_000
+/// - Notes: this should be memoized OR leverage a file-based lookup for large numbers
+///            it is essentially a dictionary
+///
+public func primeNumbersUpTo(_ integer: Int) -> [Int] {
+  var result: [Int] = []    // memoize this!
+  let maxValue = 1_000_000  // above this takes too much time
   switch integer {
-    case ...1:
-      print("must be greater than 1")
-    case 2: // 2 is the only even prime
-      return [2]
-    case 3...maxValue: // only check up to maxValue
+    case ..<2:
+      break
+    case 2:
+      return [2]  // 2 is the smallest integer with prime factors
+    case 3...maxValue:
       result.append(2)
-      // all primes above 2 are odd
+
+      // all primes above 2 are odd, start at 3 and jump by 2
       for val in stride(from: 3, through: integer, by: 2) {
         if val.isPrime { result.append(val) }
       }
     default: // don't compute primes above 1_000_000
-      print("\(integer) number is too big")
+      print("\(integer) is too big for primeNumbersBelow(Int)")
   }
   return result
 }
