@@ -107,24 +107,24 @@ public extension Int {
 
 /// Boolean property on Int
 ///
-/// - computed property: isPrime. (see alternate implementation below)
+/// - computed property: isPrime2. (see alternate implementation below)
 ///
 /// - returns: Bool whether self is prime.
 ///
-/// A more efficient version of isPrime uses the fact that all prime numbers,
+/// isPrime2 uses the fact that all prime numbers,
 /// other than 2 and 3 can all be written as mod 6X - 1 or mod 6X + 1
 /// See: https://primes.utm.edu/notes/faq/six.html
 /// Source: https://stackoverflow.com/questions/53022927/uilabel-doesnt-refresh-at-every-calculation/53023939#53023939
-///
+/// Tests show this is approx 2x to 10x slower than .isPrime
 public extension Int {
-  var isPrime: Bool {
+  var isPrime2: Bool {
 
     guard self >= 2 else { return false } // negative*, 0, 1 just returns false
     if self < 4       { return true }
     if self % 2 == 0  { return false }
     if self % 3 == 0  { return false }
     let maxDivisor = Int(sqrt(Double(self))) // divisor upper bound for self
-    let jumpBy = (maxDivisor < 5) ? 2 : 6    // jump by 2 below 25, jump by 6 above 25
+    let jumpBy = (maxDivisor < 5) ? 2 : 6    // jump by 2 below 5 (25), jump by 6 at 25+
     for jumpDivisor in stride(from: 5, through: maxDivisor, by: jumpBy) {
       for check in [jumpDivisor, jumpDivisor + 2] {
         if self % check == 0 {
@@ -137,15 +137,20 @@ public extension Int {
 }
 
 
+/// Boolean property on Int
 ///
-/// A different (slightly slower) version of isPrime uses the fact that all prime numbers,
+/// - computed property: isPrime. (see alternate implementation above)
+///
+/// - returns: Bool whether self is prime.
+///
+/// This (faster) version of isPrime uses the fact that all prime numbers,
 /// other than 2 and 3 can all be written as 6X - 1 or 6X + 1:
 /// See: https://primes.utm.edu/notes/faq/six.html
 /// Source: https://stackoverflow.com/questions/53022927/uilabel-doesnt-refresh-at-every-calculation/53023939#53023939
 ///
-
+/// Tests show this is approx 2x to 10x faster than .isPrime2
 public extension Int {
-  var isPrime2: Bool {
+  var isPrime: Bool {
     switch self {
       case ...1:  // negative numbers, zero, and one are not prime, for various reasons
         return false
@@ -159,34 +164,32 @@ public extension Int {
         // upper bound for exiting the while loop below
         let maxDivisor = Int(sqrt(Double(self)))
 
-        // instead of just checking ALL odd divisor numbers... up to maxDivisor
+        // instead of just checking ALL odd numbers... up to maxDivisor
         // start at divisor = 5 (after handling 2 & 3), jump by 6... to 11, 17, 23, 29, 35...
-        // check self % divisor (which is odd) and self % divisor + 2 (the next odd)
-        // return false (not prime) if either divides evenly, otherwise keep going up 6
+        // check self % divisor (which is odd) and self % divisor+2 (the next odd)
+        // return false (not prime) if either divisor divides evenly, otherwise keep going up 6
         var divisor = 5
         while (divisor <= maxDivisor) {
+          //print(" checking divisors:", divisor, divisor+2)
           if self % divisor == 0 || self % (divisor + 2) == 0 {
             return false
           }
           divisor += 6
         }
-
         return true
     }
   }
 }
 
 
-/// Use our self.primeFactors to return the largest or smallest Prime Factor of self
-/// We are guaranteed that primeFactors returns at least one Int, so we can force unwrap
+/// Use our self.primeFactors to return the max or min Prime Factor of self
+/// We are guaranteed primeFactors returns at least one Int, so we can force unwrap
 public extension Int {
   var largestPrime: Int {
-    //let max = self.primeFactors.last!
     return self.primeFactors.max()!
   }
 
   var smallestPrime: Int {
-    //let min = self.primeFactors.first!
     return self.primeFactors.min()!
   }
 }
@@ -224,7 +227,7 @@ public func allFactors(of n: Int) -> [Int] {
 ///            it is essentially a dictionary
 ///
 public func primeNumbersUpTo(_ integer: Int) -> [Int] {
-  var result: [Int] = []    // memoize this!
+  var result: [Int] = []
   let maxValue = 1_000_000  // above this takes too much time
   switch integer {
     case ..<2:

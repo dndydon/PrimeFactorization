@@ -11,8 +11,8 @@ This package provides public functions and Int extensions for Prime Factorizatio
   -  **.largestPrime**: Int
   -  **.smallestPrime**: Int
 
-2. *Functions:*
-  -  **primeNumbersBelow(_ integer: Int)** -> [Int]
+2. *Global Functions:*
+  -  **primeNumbersUpTo(_ integer: Int)** -> [Int]
   -  **allFactors(of n: Int)** -> [Int]
  
 ## How to Use
