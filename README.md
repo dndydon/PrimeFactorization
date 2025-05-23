@@ -3,6 +3,8 @@
 ## Description of this package.
 This package provides public functions and Int extensions for Prime Factorization & All Factorization of Integers.
 
+Updated: 2024.11.14
+
 1. *Extensions* on Integer
   -  **.primeFactors**: [Int]
   -  **.primeFactorsOf**(_ number: Int) -> [Int]
@@ -14,7 +16,7 @@ This package provides public functions and Int extensions for Prime Factorizatio
 2. *Global Functions:*
   -  **primeNumbersUpTo(_ integer: Int)** -> [Int]
   -  **allFactors(of n: Int)** -> [Int]
-  -  **primeNumbers(from: Int = 2, through integer: Int) -> [Int]
+  -  **primeNumbers(from: Int = 2, through integer: Int)** -> [Int]
  
 ## How to Use
 Add this as a Swift Package. See Tests for usage examples.
