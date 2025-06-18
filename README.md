@@ -3,13 +3,11 @@
 ## Description of this package.
 This package provides public functions and Int extensions for Prime Factorization & All Factorization of Integers.
 
-Updated: 2024.11.14
+Last Updated: 2025.6.9
 
-1. *Extensions* on Integer
+1. *Public Extensions* on Integer
   -  **.primeFactors**: [Int]
-  -  **.primeFactorsOf**(_ number: Int) -> [Int]
   -  **.isPrime**: Bool
-  -  **.isPrime2**: Bool
   -  **.largestPrime**: Int
   -  **.smallestPrime**: Int
 

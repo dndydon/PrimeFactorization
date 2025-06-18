@@ -4,16 +4,17 @@
 import Foundation
 
 public extension Int {
-  /// Returns the prime factors of the integer in ascending order
+  /// Returns the prime factors of self integer in ascending order
   /// - Returns: Array of prime factors, empty array for numbers <= 1
   var primeFactors: [Int] {
-    return optimizedPrimeFactorsOf(self)
+    return primeFactorsOf(self)
   }
 
   /// Optimized prime factorization using trial division
   /// - Parameter number: The number to factorize
   /// - Returns: Array of prime factors in ascending order
-  private func optimizedPrimeFactorsOf(_ number: Int) -> [Int] {
+  /// - note: this is a private func called by the Int public extension above
+  private func primeFactorsOf(_ number: Int) -> [Int] {
     // Handle edge cases
     guard number > 1 else { return [] }
 
@@ -60,8 +61,9 @@ public extension Int {
 }
 
 public extension Int {
-  /// Optimized prime checking using 6k±1 method
-  var isPrimeOptimized: Bool {
+  /// Optimized prime checking using 6k±1 method.
+  /// Add a cache lookup here -- the cache never invalidates, and we don't want to calculate redundantly
+  var isPrime: Bool {
     switch self {
       case ...1:
         return false
@@ -70,12 +72,26 @@ public extension Int {
       case _ where self % 2 == 0 || self % 3 == 0:
         return false
       default:
+
+         let maxMagnitude = Self.max  //.magnitude
+         let maxRoot = Int(Double(maxMagnitude).squareRoot())
+
+        // print("max magnitude:", maxMagnitude, "max root:", maxRoot)
+
         var divisor = 5
-        while divisor * divisor <= self {
+//        guard divisor <= maxRoot else {
+//          print ("divisor out of bounds: \(maxRoot)")
+//          fatalError()
+//        }
+        while divisor * divisor <= self {   // arithmetic overflow error can happen here
           if self % divisor == 0 || self % (divisor + 2) == 0 {
             return false
           }
           divisor += 6
+          if divisor > maxRoot {
+            //print ("\(self) divisor \(divisor) out of bounds: \(maxRoot)")
+            break
+          }
         }
         return true
     }
@@ -84,12 +100,14 @@ public extension Int {
 
 public extension Int {
   /// Returns the largest prime factor, nil if no prime factors exist
+  /// - note: assumes primeFactors is sorted ascending
   var largestPrimeFactor: Int? {
     let factors = self.primeFactors
     return factors.isEmpty ? nil : factors.last
   }
 
   /// Returns the smallest prime factor, nil if no prime factors exist
+  /// - note: assumes primeFactors is sorted ascending
   var smallestPrimeFactor: Int? {
     let factors = self.primeFactors
     return factors.isEmpty ? nil : factors.first
@@ -117,52 +135,80 @@ public func allFactors(of n: Int) -> [Int] {
 }
 
 /// Sieve of Eratosthenes for efficient prime generation
+/// - Parameter limit: Integer upper bound for looking for primes
+/// - Returns: Int array
+/// - note: isPrimeArrray
 public func primeNumbersUpTo(_ limit: Int) -> [Int] {
   guard limit >= 2 else { return [] }
   guard limit <= 1_000_000 else { return [] }  // above this takes too much time
-  var isPrime = Array(repeating: true, count: limit + 1)
-  isPrime[0] = false
-  isPrime[1] = false
+  var isPrimeArrray = Array(repeating: true, count: limit + 1) // allocate array set all true
+  isPrimeArrray[0] = false
+  isPrimeArrray[1] = false
 
-  for i in 1...Int(Double(limit).squareRoot()) {
-    if isPrime[i] {
-      for j in stride(from: i * i, through: limit, by: i) {
-        isPrime[j] = false
+  for i in 1...Int(Double(limit).squareRoot()) {  // check from 1 up to square root of limit
+    if isPrimeArrray[i] {
+      for j in stride(from: i * i, through: limit, by: i) { // set all squares to false
+        isPrimeArrray[j] = false
       }
     }
   }
-
-  return isPrime.enumerated().compactMap { $0.element ? $0.offset : nil }
+  // return an array of offsets where isPrime array element is still true
+  return isPrimeArrray.enumerated().compactMap { $0.element ? $0.offset : nil }
 }
 
 /// Generate primes in a range using sieve method
 public func primeNumbers(from: Int = 2, through: Int) -> [Int] {
-  guard through >= from && from >= 2 else { return [] }
+  guard through >= from else { return [] }  //&& from >= 2
 
   let allPrimes = primeNumbersUpTo(through)
   return allPrimes.filter { $0 >= from }
 }
 
+
 /// Improved Prime Iterator using lazy evaluation
 struct PrimeIteratorSequence: Sequence, IteratorProtocol {
-  typealias Element = Int
+  typealias Element = Int // generalize this below
 
-  private let from: Int
-  private let through: Int
-  private var current: Int
+  private let from: Element
+  private let through: Element  // if nil, how about just the next prime?
+  private var current: Element
 
-  init(from: Int = 2, through: Int) {
-    self.from = Swift.max(2, from)
-    self.through = through
+  init(from startIndex: Element = 2, through endIndex: Element = 37) {
+
+    guard startIndex > 0 else {
+      fatalError("\(startIndex) must be > 0. Argument out of range")
+    }
+
+    guard startIndex <= endIndex else {
+      fatalError("\(startIndex) must be less than or equal to \(endIndex)")
+    }
+
+    // let maxMagnitude = Int.max.magnitude
+    // let maxRoot = Int(Double(maxMagnitude).squareRoot())
+    // print("max magnitude:", maxMagnitude, "max root:", maxRoot)
+
+    // don't want even startIndex (unless it is 2, which is the default)
+    self.from = startIndex == 2 ? startIndex : startIndex % 2 == 1 ? startIndex : startIndex + 1
+
     self.current = self.from
+
+    if endIndex >= Int(Int.max.magnitude) {
+      self.through = Int(Int.max.magnitude - 1)
+    } else {
+      self.through = endIndex
+    }
+
   }
 
-  mutating func next() -> Int? {
+    mutating func next() -> Int? {
     while current <= through {
       let candidate = current
+
+      // Wait, what about: Check potential factors of form 6k±1 instead?
       current += (current == 2) ? 1 : 2 // Skip even numbers after 2
 
-      if candidate.isPrimeOptimized {
+      // Check potential factors using 6k±1 algorithm (Or, we could use a cache of the primes in there)
+      if candidate.isPrime {
         return candidate
       }
     }
@@ -173,96 +219,3 @@ struct PrimeIteratorSequence: Sequence, IteratorProtocol {
 enum PrimeFactorizationError: Error {
   case invalidInput(Int)
 }
-
-
-/*
- I'll provide a comprehensive review of your Prime Factorization Swift code. Overall, this is a well-documented implementation with some interesting optimizations, but there are several areas for improvement.
-
- ## **Strengths**
-
- **Good Documentation**: Excellent use of Swift documentation comments with clear parameter descriptions and return value explanations.
-
- **Mathematical Optimization**: Smart use of the 6n±1 optimization for prime checking, which is mathematically sound since all primes > 3 are of the form 6k±1.
-
- **Multiple Implementations**: Providing both `isPrime` and `isPrime2` variants allows for performance comparison.
-
- ## **Critical Issues**
-
- ### 1. **Incorrect Prime Factorization Algorithm**
- The main `primeFactorsOf` function has a fundamental flaw:
-
- ```swift
- // Current problematic code
- for bigDivisor in [2, 3, jumpDivisor, jumpDivisor + 2] {
- ```
-
- This inner loop is incorrect because:
- - It redundantly checks 2 and 3 on every iteration
- - The 6n±1 optimization is misapplied - you should only check `jumpDivisor` and `jumpDivisor + 2`
- - The algorithm doesn't properly handle repeated prime factors
-
- **Example Bug**: `12.primeFactors` might return `[2, 6]` instead of `[2, 2, 3]`
-
- ### 2. **Edge Case Handling Issues**
- ```swift
- guard number > 3 else { return [number] }
- ```
-
- This returns `[0]`, `[1]`, `[-5]` etc., which are incorrect since these numbers don't have prime factorizations.
-
- ### 3. **Performance Problems**
- The `newPrimeFactorsOf` function generates all primes up to √n on every recursive call, which is extremely inefficient.
-
- ## **Recommended Fixes**
-
- ## **Additional Swift/SwiftUI Specific Recommendations**
-
- ### 1. **Property Naming Conventions**
- ```swift
- // Better naming following Swift conventions
- var largestPrimeFactor: Int? // Instead of largestPrime
- var smallestPrimeFactor: Int? // Instead of smallestPrime
- ```
-
- ### 2. **Error Handling**
- Consider using Result types or throwing functions for invalid inputs:
- ```swift
- enum PrimeFactorizationError: Error {
- case invalidInput(Int)
- }
-
- func primeFactors(of number: Int) throws -> [Int]
- ```
-
- ### 3. **Performance Considerations for SwiftUI**
- If using this in SwiftUI views, consider:
- - Making expensive computations `@State` or `@StateObject` properties
- - Using `Task` for async computation of large numbers
- - Implementing cancellation for long-running operations
-
- ### 4. **Memory Optimization**
- ```swift
- // Use lazy evaluation for large sequences
- lazy var primeSequence = PrimeIteratorSequence(from: 2, through: 1000)
- ```
-
- ## **Testing Recommendations**
-
- Add comprehensive unit tests covering:
- - Edge cases: 0, 1, 2, 3, negative numbers
- - Perfect squares: 4, 9, 16, 25
- - Large primes: 97, 101, 997
- - Composite numbers: 12, 60, 100
-
- ## **Overall Assessment**
-
- The code shows good understanding of mathematical optimizations, but the core prime factorization algorithm needs fixing. The documentation is excellent, and the performance considerations show thoughtful engineering. With the suggested corrections, this would be a solid, production-ready implementation.
-
- The main areas to focus on are:
- 1. Fix the factorization algorithm logic
- 2. Improve edge case handling
- 3. Optimize the recursive approach
- 4. Add proper error handling
-
- Would you like me to elaborate on any specific aspect or help you implement unit tests for the corrected version?
- */
