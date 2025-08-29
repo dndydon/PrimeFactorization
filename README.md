@@ -3,7 +3,9 @@
 ## Description of this package.
 This package provides public functions and Int extensions for Prime Factorization & All Factorization of Integers.
 
-Last Updated: 2025.6.9
+Last Updated: 2025.08.29
+
+This package is NOT ready for usage in any code that matters. Large areas under construction.
 
 1. *Public Extensions* on Integer
   -  **.primeFactors**: [Int]
@@ -17,8 +19,8 @@ Last Updated: 2025.6.9
   -  **primeNumbers(from: Int = 2, through integer: Int)** -> [Int]
  
 ## How to Use
-Add this as a Swift Package. See Tests for usage examples.
+Add this as a Swift Package. See Tests for usage examples. 
 
 ## License
-MIT License.  Copyright (c) 2024 Don Sleeter
+MIT License.  Copyright (c) 2024, 2025 Don Sleeter
 
