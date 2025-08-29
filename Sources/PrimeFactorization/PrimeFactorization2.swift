@@ -26,7 +26,7 @@ public enum PrimeFactorizationError: Error, LocalizedError {
 /// - Parameter number: The number to factorize
 /// - Returns: Array of prime factors in ascending order
 /// - Throws: PrimeFactorizationError if the number is invalid
-@available(macOS 10.15, *)
+@available(macOS 10.15, iOS 13.0, *)
 public func primeFactors(of number: Int) async throws -> [Int] {
   guard number > 1 else {
     throw PrimeFactorizationError.invalidNumber
@@ -74,7 +74,7 @@ public func primeFactors(of number: Int) async throws -> [Int] {
 /// - Parameter number: The number to factorize
 /// - Returns: Array of prime factors in ascending order
 /// - Throws: PrimeFactorizationError if the number is invalid
-@available(macOS 10.15, *)
+@available(macOS 10.15, iOS 13.0, *)
 public func primeFactorsOptimized(of number: Int) async throws -> [Int] {
   guard number > 1 else {
     throw PrimeFactorizationError.invalidNumber
@@ -118,7 +118,7 @@ public func primeFactorsOptimized(of number: Int) async throws -> [Int] {
 /// - Parameter numbers: Array of numbers to factorize
 /// - Returns: Dictionary mapping each number to its prime factors
 /// - Throws: PrimeFactorizationError if any number is invalid
-@available(macOS 10.15, *)
+@available(macOS 10.15, iOS 13.0, *)
 public func primeFactorsConcurrent(of numbers: [Int]) async throws -> [Int: [Int]] {
   return try await withThrowingTaskGroup(of: (Int, [Int]).self) { group in
     var results: [Int: [Int]] = [:]

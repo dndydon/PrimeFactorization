@@ -5,6 +5,7 @@ import Foundation // for CFAbsoluteTimeGetCurrent()
 // Do these tests in a series, not parallel.
 @Suite(.serialized) class PrimeFactorizationTests {
 
+  @available(macOS 10.15, iOS 15.0, *)
   @Test func testPrimeFactors() async throws {
     var testValues: [Int] = Array(stride(from: 1, through: 20, by: 1))
     testValues.append(contentsOf: stride(from: (Int.max - 7), through: Int.max, by: 1))
@@ -19,6 +20,7 @@ import Foundation // for CFAbsoluteTimeGetCurrent()
     }
   }
 
+  @available(macOS 10.15, iOS 15.0, *)
   @Test("Speed comparison: classic vs optimized prime factorization")
   func comparePrimeFactorizationSpeeds() async throws {
     let testNumbers = Array(3_000...18_500)
@@ -50,6 +52,7 @@ import Foundation // for CFAbsoluteTimeGetCurrent()
     #expect(optimizedRate < classicRate, "Optimized version should be faster")
   }
 
+  @available(macOS 10.15, iOS 15.0, *)
   @Test("prime factorization demonstration 2")
   func testPrimeFactorization() async throws {
     Task {
@@ -58,6 +61,7 @@ import Foundation // for CFAbsoluteTimeGetCurrent()
   }
 
   // same as above except that it uses the new primeNumbers()
+  @available(macOS 10.15, iOS 15.0, *)
   @Test func testPrimeNumbers() async throws {
 
     #expect(primeNumbers(through: -1) == []) // need to throw an error
@@ -99,7 +103,7 @@ import Foundation // for CFAbsoluteTimeGetCurrent()
   }
 
 
-  //@available(iOS 15.0, *)
+  @available(macOS 10.15, iOS 15.0, *)
   @Test func speedTestPrimeNumbers() async throws {
     // speed test between two different prime factor algorithms:
     // primeNumbersUpTo() and primeNumbers(:)
@@ -123,7 +127,7 @@ import Foundation // for CFAbsoluteTimeGetCurrent()
     print("primeNumbers(through:) is \(difference) faster than primeNumbersUpTo()")
   }
 
-  //@available(iOS 16.0, *)
+  @available(macOS 10.15, iOS 15.0, *)
   @Test func isPrime() async throws {
     let maxNumber: Int = 200
     for number in (1...maxNumber).lazy.map({ $0 }) {
@@ -197,6 +201,7 @@ import Foundation // for CFAbsoluteTimeGetCurrent()
     }
   }
 
+  @available(macOS 10.15, iOS 15.0, *)
   @Test func primeNumbersTest() async throws {
     let testRange =  (Int.max - 300)...(Int.max)  // [9223372036854775549, 9223372036854775643, 9223372036854775783]
     //let testRange = 80...950   // 80...950: [83, 89, 97, 101]...[883, 887, 907, 911, 919, 929, 937, 941, 947]
@@ -212,6 +217,7 @@ import Foundation // for CFAbsoluteTimeGetCurrent()
     }
   }
 
+  @available(macOS 10.15, iOS 15.0, *)
   @Test("primesByJump6Method Test")
   func primesByJump6MethodTest() async throws {
     let testRange = 1...500_000   // 41,538 Primes in 0.065 sec [2, 3, 5, 7]...[499883, 499897, 499903, 499927, 499943, 499957, 499969, 499973, 499979]

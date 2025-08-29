@@ -7,7 +7,7 @@
 
 import Foundation
 
-@available(macOS 10.15, *)
+@available(macOS 10.15, iOS 15.0, *)
 public func demonstratePrimeFactorization() async {
     do {
         print("Computing prime factors...\n")

@@ -203,7 +203,7 @@ public actor PrimeGenerator {
 #if canImport(SwiftUI)
 import SwiftUI
 
-@available(iOS 13.0, macOS 12.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 public extension View {
   /// Modifier to display prime factorization asynchronously
   func primeFactorization(of number: Binding<Int>) -> some View {
