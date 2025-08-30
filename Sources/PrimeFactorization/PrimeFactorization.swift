@@ -101,20 +101,14 @@ public extension Int {
   }
 }
 
-
+/// Return the largest or smallest Prime Factor of self, or if self is not > 1, return 1
 public extension Int {
-  /// Returns the largest prime factor, nil if no prime factors exist
-  /// - note: assumes primeFactors is sorted ascending
-  var largestPrimeFactor: Int? {
-    let factors = self.primeFactors
-    return factors.isEmpty ? nil : factors.last
+  var largestPrimeFactor: Int {
+    return self.primeFactors.max() ?? 1
   }
 
-  /// Returns the smallest prime factor, nil if no prime factors exist
-  /// - note: assumes primeFactors is sorted ascending
-  var smallestPrimeFactor: Int? {
-    let factors = self.primeFactors
-    return factors.isEmpty ? nil : factors.first
+  var smallestPrimeFactor: Int {
+    return self.primeFactors.min() ?? 1
   }
 }
 

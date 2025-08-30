@@ -138,7 +138,7 @@ import Foundation // for CFAbsoluteTimeGetCurrent()
   @Test func largestPrime() async throws {
     var record: [Int] = []
     for testNumber in stride(from: -4, through: 30, by: 1) {
-      let largestPrime = testNumber.largestPrimeFactor ?? 1
+      let largestPrime = testNumber.largestPrimeFactor
       record.append(largestPrime)
       print("largestPrimeFactor of  \t\(testNumber) is: \t \(largestPrime)  \t\(testNumber.primeFactors)")
     }
@@ -149,7 +149,7 @@ import Foundation // for CFAbsoluteTimeGetCurrent()
   @Test func smallestPrime() async throws {
     var record: [Int] = []
     for testNumber in stride(from: -4, through: 30, by: 1) {
-      let smallestPrime = testNumber.smallestPrimeFactor ?? 1
+      let smallestPrime = testNumber.smallestPrimeFactor
       record.append(smallestPrime)
       print("smallestPrimeFactor of  \t\(testNumber) is: \t \(smallestPrime)  \t\(testNumber.primeFactors)")
     }
