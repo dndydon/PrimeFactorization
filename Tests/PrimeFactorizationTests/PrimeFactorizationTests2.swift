@@ -20,10 +20,13 @@ struct PrimeFactorizationTests2 {
       testArgs(testLabel: "Prime number 1373", arg: 1373, expectedResult: [1373]),
       testArgs(testLabel: "Large composite number 600000", arg: 600000, expectedResult: [2, 2, 2, 2, 2, 2, 3, 5, 5, 5, 5, 5]),
       testArgs(testLabel: "Large composite number 600001", arg: 600001, expectedResult: [19, 23, 1373]),
+      testArgs(testLabel: "Larger composite number 600,000,004", arg: 600_000_004, expectedResult: [2, 2, 150000001]),
+      testArgs(testLabel: "Larger prime number 1,200,000,041", arg: 1_200_000_041, expectedResult: [1200000041]),
     ]
 
+    print("Running tests:")
     for data in testData {
-      print("Running test: \(data.testLabel)")
+      print("\(data.testLabel)")
       let result = try await primeFactors(of: data.arg)
       #expect(result == data.expectedResult)
       print("\t\tResult: \(result)")
@@ -52,7 +55,10 @@ struct PrimeFactorizationTests2 {
       _ = try await primeFactors(of: -1)
       #expect(Bool(false), "Should throw on -1")
     } catch {
-      #expect(String(describing: error).contains("invalidNumber"))
+      #expect(error is PrimeFactorizationError)
+      if case .invalidInput(let msg) = error as? PrimeFactorizationError {
+        #expect(msg.contains("must be greater than 1"))
+      }
     }
   }
 

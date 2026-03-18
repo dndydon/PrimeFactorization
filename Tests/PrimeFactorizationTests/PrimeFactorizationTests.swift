@@ -55,76 +55,104 @@ import Foundation // for CFAbsoluteTimeGetCurrent()
   @available(macOS 10.15, iOS 15.0, *)
   @Test("prime factorization demonstration 2")
   func testPrimeFactorization() async throws {
-    Task {
-      await demonstratePrimeFactorization()
-    }
+    await demonstratePrimeFactorization()
+  }
+
+  @available(macOS 12.0, iOS 15.0, *)
+  @Test("benchmark Prime Generation demonstration")
+  func benchmarkPrimeFactorization() async throws {
+    await benchmarkPrimeGeneration()
+    /*
+     Baseline (1M)
+     Range: 1,000,000 (2...1,000,000)
+     Primes found: 78,498
+     Time: 0.11 seconds
+     Memory delta: 1.16 MB
+     Throughput: 9165153 numbers/sec
+     Rating: ✅ Excellent
+
+     Medium (5M)
+     Range: 5,000,000 (2...5,000,000)
+     Primes found: 348,513
+     Time: 0.74 seconds
+     Memory delta: 4.70 MB
+     Throughput: 6780681 numbers/sec
+     Rating: ✅ Excellent
+
+     Current Default (15M)
+     Range: 15,000,000 (2...15,000,000)
+     Primes found: 970,704
+     Time: 3.07 seconds
+     Memory delta: 15.64 MB
+     Throughput: 4892880 numbers/sec
+     Rating: ⚠️ Acceptable
+
+     Double (30M)
+     Range: 15,000,000 (15,000,000...30,000,000)
+     Primes found: 887,155
+     Time: 4.60 seconds
+     Memory delta: 0.67 MB
+     Throughput: 3260543 numbers/sec
+     Rating: ⚠️ Acceptable
+
+     Large (50M)
+     Range: 15,000,000 (35,000,000...50,000,000)
+     Primes found: 854,359
+     Time: 5.79 seconds
+     Memory delta: 0.02 MB
+     Throughput: 2591993 numbers/sec
+     Rating: ⚠️ Acceptable
+
+     */
   }
 
   // same as above except that it uses the new primeNumbers()
   @available(macOS 10.15, iOS 15.0, *)
   @Test func testPrimeNumbers() async throws {
 
-    #expect(primeNumbers(through: -1) == []) // need to throw an error
-    #expect(primeNumbers(through: 0) == [])
-    #expect(primeNumbers(through: 1) == [])
+    // Test error cases
+    #expect(throws: PrimeFactorizationError.self) {
+      try primeNumbers(through: -1)
+    }
+    #expect(throws: PrimeFactorizationError.self) {
+      try primeNumbers(through: 0)
+    }
+    #expect(throws: PrimeFactorizationError.self) {
+      try primeNumbers(from: 5, through: 2)
+    }
+    
     let testNumber = 31
     for checkNumber in stride(from: 2, through: testNumber, by: 1) {
-      let allPrimes = primeNumbers(through: checkNumber)
+      let allPrimes = try primeNumbers(through: checkNumber)
       print("primeNumbers(through:\(checkNumber)):", allPrimes)
     }
-    #expect(primeNumbers(from: 2, through: 2) == [2])
-    #expect(primeNumbers(from: 2, through: 3) == [2, 3])
-    #expect(primeNumbers(from: 3, through: 3) == [3])
-    #expect(primeNumbers(through: 3) == [2, 3])
-    #expect(primeNumbers(through: 4) == [2, 3])
-    #expect(primeNumbers(through: 5) == [2, 3, 5])
-    #expect(primeNumbers(from: 3, through: 5) == [3, 5])
-    #expect(primeNumbers(through: 7) == [2, 3, 5, 7])
-    #expect(primeNumbers(through: 9) == [2, 3, 5, 7])
-    #expect(primeNumbers(from: 8, through: 9) == [])
-    #expect(primeNumbers(through: 11) == [2, 3, 5, 7, 11])
-    #expect(primeNumbers(through: 13) == [2, 3, 5, 7, 11, 13])
-    #expect(primeNumbers(through: 15) == [2, 3, 5, 7, 11, 13])
-    #expect(primeNumbers(through: 23) == [2, 3, 5, 7, 11, 13, 17, 19, 23])
-    #expect(primeNumbers(from: 8, through: 23) == [11, 13, 17, 19, 23])
+    #expect(try primeNumbers(from: 2, through: 2) == [2])
+    #expect(try primeNumbers(from: 2, through: 3) == [2, 3])
+    #expect(try primeNumbers(from: 3, through: 3) == [3])
+    #expect(try primeNumbers(through: 3) == [2, 3])
+    #expect(try primeNumbers(through: 4) == [2, 3])
+    #expect(try primeNumbers(through: 5) == [2, 3, 5])
+    #expect(try primeNumbers(from: 3, through: 5) == [3, 5])
+    #expect(try primeNumbers(through: 7) == [2, 3, 5, 7])
+    #expect(try primeNumbers(through: 9) == [2, 3, 5, 7])
+    #expect(try primeNumbers(from: 8, through: 9) == [])
+    #expect(try primeNumbers(through: 11) == [2, 3, 5, 7, 11])
+    #expect(try primeNumbers(through: 13) == [2, 3, 5, 7, 11, 13])
+    #expect(try primeNumbers(through: 15) == [2, 3, 5, 7, 11, 13])
+    #expect(try primeNumbers(through: 23) == [2, 3, 5, 7, 11, 13, 17, 19, 23])
+    #expect(try primeNumbers(from: 8, through: 23) == [11, 13, 17, 19, 23])
 
     /// https://www.mathematical.com/primes0to1000k.html
-    #expect(primeNumbersUpTo(2_000_000).count == 148933)
-    #expect(primeNumbers(through: 2_000_000).count == 148933)
-    #expect(primeNumbers(through: 5_000_000).count == 348513)
-    #expect(primeNumbers(from: 100_000, through: 10_300_000).suffix(5) == [10299917, 10299953, 10299973, 10299983, 10299997])
+    #expect(try primeNumbers(through: 2_000_000).count == 148933)
+    #expect(try primeNumbers(through: 5_000_000).count == 348513)
+    #expect(try primeNumbers(from: 100_000, through: 10_300_000).suffix(5) == [10299917, 10299953, 10299973, 10299983, 10299997])
 
     print("\nlast 5 primes from 9_999_000 to 10_000_000:")
-    let last5PrimesFrom9_999_000_to_10_000_000 = primeNumbers(from: 9_999_000, through: 10_000_000).suffix(5)
+    let last5PrimesFrom9_999_000_to_10_000_000 = try primeNumbers(from: 9_999_000, through: 10_000_000).suffix(5)
     #expect(last5PrimesFrom9_999_000_to_10_000_000 == [9999937, 9999943, 9999971, 9999973, 9999991])
     print(last5PrimesFrom9_999_000_to_10_000_000.map({ val in
       val.formatted()
     }))
-  }
-
-
-  @available(macOS 10.15, iOS 15.0, *)
-  @Test func speedTestPrimeNumbers() async throws {
-    // speed test between two different prime factor algorithms:
-    // primeNumbersUpTo() and primeNumbers(:)
-    let testNumbers = 3000...3500
-    let list = testNumbers.lazy.map { $0 }
-    let startTime1 = CFAbsoluteTimeGetCurrent()
-    for number in list {
-      let _ = primeNumbersUpTo(number)      // old way
-    }
-    let endTime1 = CFAbsoluteTimeGetCurrent()
-    for number in list {
-      let _ = primeNumbers(through: number) // new way
-    }
-    let endTime2 = CFAbsoluteTimeGetCurrent()
-    let totalElapsed1 = endTime1 - startTime1
-    let totalElapsed2 = endTime2 - endTime1
-
-    print("totalElapsed1: primeNumbersUpTo ", totalElapsed1.formatted())
-    print("totalElapsed2: primeNumbers ", totalElapsed2.formatted())
-    let difference = ((totalElapsed1 - totalElapsed2)/totalElapsed1).formatted(.percent)
-    print("primeNumbers(through:) is \(difference) faster than primeNumbersUpTo()")
   }
 
   @available(macOS 10.15, iOS 15.0, *)
@@ -136,25 +164,23 @@ import Foundation // for CFAbsoluteTimeGetCurrent()
   }
 
   @Test func largestPrime() async throws {
-    var record: [Int] = []
+    var record: [Int?] = []
     for testNumber in stride(from: -4, through: 30, by: 1) {
       let largestPrime = testNumber.largestPrimeFactor
       record.append(largestPrime)
-      print("largestPrimeFactor of  \t\(testNumber) is: \t \(largestPrime)  \t\(testNumber.primeFactors)")
+      print("largestPrimeFactor of  \t\(testNumber) is: \t \(largestPrime.map(String.init) ?? "nil")  \t\(testNumber.primeFactors)")
     }
-    //print(record)
-    #expect(record == [1, 1, 1, 1, 1, 1, 2, 3, 2, 5, 3, 7, 2, 3, 5, 11, 3, 13, 7, 5, 2, 17, 3, 19, 5, 7, 11, 23, 3, 5, 13, 3, 7, 29, 5])
+    #expect(record.map { $0 ?? 1 } == [1, 1, 1, 1, 1, 1, 2, 3, 2, 5, 3, 7, 2, 3, 5, 11, 3, 13, 7, 5, 2, 17, 3, 19, 5, 7, 11, 23, 3, 5, 13, 3, 7, 29, 5])
   }
 
   @Test func smallestPrime() async throws {
-    var record: [Int] = []
+    var record: [Int?] = []
     for testNumber in stride(from: -4, through: 30, by: 1) {
       let smallestPrime = testNumber.smallestPrimeFactor
       record.append(smallestPrime)
-      print("smallestPrimeFactor of  \t\(testNumber) is: \t \(smallestPrime)  \t\(testNumber.primeFactors)")
+      print("smallestPrimeFactor of  \t\(testNumber) is: \t \(smallestPrime.map(String.init) ?? "nil")  \t\(testNumber.primeFactors)")
     }
-    //print(record)
-    #expect(record == [1, 1, 1, 1, 1, 1, 2, 3, 2, 5, 2, 7, 2, 3, 2, 11, 2, 13, 2, 3, 2, 17, 2, 19, 2, 3, 2, 23, 2, 5, 2, 3, 2, 29, 2])
+    #expect(record.map { $0 ?? 1 } == [1, 1, 1, 1, 1, 1, 2, 3, 2, 5, 2, 7, 2, 3, 2, 11, 2, 13, 2, 3, 2, 17, 2, 19, 2, 3, 2, 23, 2, 5, 2, 3, 2, 29, 2])
   }
 
   @Test func testAllFactors() async throws {
@@ -221,8 +247,7 @@ import Foundation // for CFAbsoluteTimeGetCurrent()
   @Test("primesByJump6Method Test")
   func primesByJump6MethodTest() async throws {
     let testRange = 1...500_000   // 41,538 Primes in 0.065 sec [2, 3, 5, 7]...[499883, 499897, 499903, 499927, 499943, 499957, 499969, 499973, 499979]
-    //let primes = PrimeIteratorSequence(from: testRange.lowerBound, through: testRange.upperBound).map { $0 }
-    let primes = primeNumbers(from: testRange.lowerBound, through: testRange.upperBound)
+    let primes = try primeNumbers(from: testRange.lowerBound, through: testRange.upperBound)
     print(primes.count.formatted(), "Primes found in testRange" )
     if primes.count > 11 {
       let prefixP = primes.prefix(upTo: 4)
