@@ -1,173 +1,138 @@
-#  PrimeFactorization Package
+# PrimeFactorization Package
 
-## Description
-A Swift package providing optimized algorithms for prime factorization, prime checking, and prime number generation using the efficient 6k±1 optimization method. Includes both synchronous and async/await APIs for flexibility in different contexts.
+A Swift package providing optimized prime factorization, primality testing, and prime generation with generic type support. Works with `Int`, `Int64`, `UInt`, and any `FixedWidthInteger` conforming type.
 
-Last Updated: 2026.03.16 **v2.0**
+Last Updated: 2026.03.21 **v3.0**
 
 ## Features
 
-### Public Extensions on `Int`
+### Core Protocol: `PrimeFactorizable`
 
-- **`.primeFactors`**: `[Int]` - Returns all prime factors in ascending order
-- **`.isPrime`**: `Bool` - Checks if the number is prime (O(√n) complexity)
-- **`.largestPrimeFactor`**: `Int?` - Returns the largest prime factor, or `nil` if none exists
-- **`.smallestPrimeFactor`**: `Int?` - Returns the smallest prime factor, or `nil` if none exists
+All prime operations are available on any conforming type (`Int`, `Int64`, `UInt`):
 
-### Synchronous Functions
+- **`.primeFactors`**: `[Self]` - Prime factors in ascending order
+- **`.isPrime`**: `Bool` - Primality check (O(sqrt(n)) complexity)
+- **`.allFactors`**: `[Self]` - All divisors in ascending order
 
-- **`primeNumbers(from: Int = 2, through: Int) throws -> [Int]`** - Generate primes in a range
-- **`allFactors(of n: Int) -> [Int]`** - Find all factors (divisors) of a number
+### Int Conveniences
+
+- **`.largestPrimeFactor`**: `Int?` - Largest prime factor, or `nil` for values <= 1
+- **`.smallestPrimeFactor`**: `Int?` - Smallest prime factor, or `nil` for values <= 1
+
+### Prime Generation
+
+- **`primeNumbers(from:through:) throws -> [Int]`** - Generate primes in a range using 6k+/-1 method
+
+### Async Operations
+
+- **`primeFactorsConcurrent(of:) async throws -> [Int: [Int]]`** - Concurrent batch factorization
+- **`PrimeGenerator`** - Actor with cached factorization and Sieve of Eratosthenes
+
+### Formatting
+
+- **`[Int].simpleArrayDescription`**: `String` - Format as "[2, 2, 3, 5]"
+- **`[Int].primeFactorizationString`**: `String` - Format as "2^2 x 3 x 5"
 
 ### Configuration
 
-- **`PrimeFactorizationSyncConfig.shared.maxPrimeRange`** - Thread-safe maximum range size for prime generation (default: 15,000,000)
-  - Use in synchronous contexts
-  - Can be adjusted based on your application's memory constraints and performance requirements
-- **`PrimeFactorizationConfig.maxPrimeRange`** - Async actor-based configuration access
-  - Use in async contexts for fully concurrent-safe access
+- **`PrimeFactorizationConfig.shared.maxPrimeRange`** - Thread-safe max range for prime generation (default: 15,000,000)
 
-### Async/Await Functions
+## Usage
 
-- **`primeFactors(of: Int) async throws -> [Int]`** - Async prime factorization with cooperative cancellation
-- **`primeFactorsOptimized(of: Int) async throws -> [Int]`** - Optimized async version using 6k±1 and small prime table
-- **`primeFactorsConcurrent(of: [Int]) async throws -> [Int: [Int]]`** - Concurrent factorization of multiple numbers
-
-### Array Extensions
-
-- **`[Int].simpleArrayDescription`**: `String` - Format as "[2, 3, 5]"
-- **`[Int].primeFactorizationString`**: `String` - Format as "2² × 3 × 5"
-
-### Iterator Sequence
-
-- **`PrimeIteratorSequence`** - Memory-efficient lazy iteration over prime numbers
-
-## Usage Examples
-
-### Synchronous Prime Operations
+### Basic Operations (Any PrimeFactorizable Type)
 
 ```swift
 import PrimeFactorization
 
-// Prime factorization
-let factors = 60.primeFactors
-// [2, 2, 3, 5] because 60 = 2² × 3 × 5
+// Works on Int
+60.primeFactors        // [2, 2, 3, 5]
+17.isPrime             // true
+60.allFactors          // [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60]
 
-// Prime checking
-let isPrime = 17.isPrime
-// true
+// Works on Int64
+Int64(600_000_000_004).primeFactors  // [2, 2, 3, 50000000001]
 
-// Largest/smallest prime factor
-if let largest = 100.largestPrimeFactor {
-    print(largest)  // 5
-}
-
-// Generate primes in a range
-do {
-    let primes = try primeNumbers(from: 10, through: 30)
-    // [11, 13, 17, 19, 23, 29]
-} catch {
-    print("Error: \(error)")
-}
-
-// All factors of a number
-let factors = allFactors(of: 60)
-// [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60]
-
-// Lazy iteration over primes
-for prime in PrimeIteratorSequence(from: 100, through: 200) {
-    print(prime)
-}
+// Works on UInt
+UInt(97).isPrime       // true
 ```
 
-### Async Prime Factorization
+### Prime Factor Utilities
 
 ```swift
-import PrimeFactorization
+60.largestPrimeFactor   // Optional(5)
+60.smallestPrimeFactor  // Optional(2)
+1.largestPrimeFactor    // nil
+```
 
-// Single number factorization
-let factors = try await primeFactors(of: 5040)
-print(factors.primeFactorizationString)
-// "2^4 × 3^2 × 5 × 7"
+### Prime Generation
 
-// Optimized version for better performance
-let optimized = try await primeFactorsOptimized(of: 987654321)
-print(optimized.simpleArrayDescription)
-// "[3, 3, 17, 17, 379721]"
+```swift
+let primes = try primeNumbers(from: 10, through: 30)
+// [11, 13, 17, 19, 23, 29]
+```
 
-// Concurrent factorization of multiple numbers
+### Concurrent Batch Factorization
+
+```swift
 let numbers = [12, 18, 24, 30]
 let results = try await primeFactorsConcurrent(of: numbers)
 // [12: [2, 2, 3], 18: [2, 3, 3], 24: [2, 2, 2, 3], 30: [2, 3, 5]]
+```
 
-for (num, factors) in results.sorted(by: { $0.key < $1.key }) {
-    print("\(num) = \(factors.primeFactorizationString)")
-}
+### PrimeGenerator (Cached + Sieve)
+
+```swift
+let generator = PrimeGenerator()
+
+// Cached factorization -- fast for repeated lookups
+let factors = await generator.primeFactors(of: 5040)
+// [2, 2, 2, 2, 3, 3, 5, 7]
+
+// Sieve of Eratosthenes -- efficient for generating all primes up to N
+let primes = await generator.primes(upTo: 1000)
+// 168 primes from 2 to 997
 ```
 
 ### Formatted Output
 
 ```swift
 let factors = [2, 2, 3, 3, 3, 5]
-
-// Simple array format
-print(factors.simpleArrayDescription)
-// "[2, 2, 3, 3, 3, 5]"
-
-// Mathematical notation with exponents
-print(factors.primeFactorizationString)
-// "2^2 × 3^3 × 5"
-```
-
-### Configuration
-
-```swift
-// Synchronous configuration (thread-safe with locks)
-PrimeFactorizationSyncConfig.shared.maxPrimeRange = 50_000_000
-let primes = try primeNumbers(through: 30_000_000)
-
-// Async configuration (actor-based, fully concurrent-safe)
-await PrimeFactorizationConfig.setMaxPrimeRange(50_000_000)
-let currentMax = await PrimeFactorizationConfig.maxPrimeRange
-```
-
-## Error Handling
-
-The package defines `PrimeFactorizationError` with two cases:
-- `.invalidInput(String)` - Invalid arguments (e.g., negative numbers, inverted ranges)
-- `.rangeTooLarge(Int)` - Requested range exceeds maximum allowed size
-
-## Installation
-
-Add this package as a dependency in your `Package.swift`:
-
-```swift
-dependencies: [
-    .package(url: "https://github.com/yourusername/PrimeFactorization.git", from: "1.0.0")
-]
+factors.simpleArrayDescription    // "[2, 2, 3, 3, 3, 5]"
+factors.primeFactorizationString  // "2^2 x 3^3 x 5"
 ```
 
 ## Performance
 
-- Uses optimized **6k±1 method** for prime checking
-- **Trial division** with overflow protection for factorization
-- Efficient **O(√n)** complexity for most operations
-- Async versions support **cooperative cancellation** for long-running computations
-- **Concurrent processing** available for multiple numbers
-- Can handle very large numbers up to `Int.max`
+- `Int` gets optimized overrides with `trailingZeroBitCount` for fast power-of-2 extraction and branch-optimized inner loops
+- Generic types use `multipliedReportingOverflow` for overflow-safe arithmetic
+- All implementations use the 6k+/-1 trial division optimization
+- O(sqrt(n)) complexity for factorization and primality testing
+- In release builds, the compiler specializes generics for concrete types, closing the performance gap
+
+## Error Handling
+
+```swift
+public enum PrimeFactorizationError: Error, Equatable {
+    case invalidInput(String)
+    case rangeTooLarge(Int)
+}
+```
+
+## File Organization
+
+| File | Contents |
+|------|----------|
+| `PrimeFactorizable.swift` | Protocol, conformances, generic defaults, Int overrides |
+| `PrimeFactorization.swift` | Error, config, utilities, prime generation |
+| `PrimeGenerator.swift` | Actor (caching + sieve), concurrent batch factorization |
+| `PrimeFactorizationDemo.swift` | Demo functions |
 
 ## Requirements
 
 - Swift 6.0+
-- Async/await features require macOS 10.15+ / iOS 13.0+ / watchOS 6.0+ / tvOS 13.0+
+- Async features require macOS 10.15+ / iOS 13.0+
 - No external dependencies
-
-## API Availability
-
-- **Synchronous APIs**: Available on all platforms
-- **Async/await APIs**: Require macOS 10.15+, iOS 13.0+, watchOS 6.0+, tvOS 13.0+
 
 ## License
 
 MIT License. Copyright (c) 2024-2026 Don Sleeter
-

@@ -11,7 +11,7 @@ private struct testArgs {
 struct PrimeFactorizationTests2 {
 
   @Test("Basic set of test numbers")
-  func smallComposite() async throws {
+  func smallComposite() {
     let testData: [testArgs] = [
       testArgs(testLabel: "Small composite number 18", arg: 18, expectedResult: [2, 3, 3]),
       testArgs(testLabel: "Small composite number 60", arg: 60, expectedResult: [2, 2, 3, 5]),
@@ -27,16 +27,10 @@ struct PrimeFactorizationTests2 {
     print("Running tests:")
     for data in testData {
       print("\(data.testLabel)")
-      let result = try await primeFactors(of: data.arg)
+      let result = data.arg.primeFactors
       #expect(result == data.expectedResult)
       print("\t\tResult: \(result)")
     }
-  }
-
-  @Test("Optimized: Medium composite number")
-  func optimizedMediumComposite() async throws {
-    let result = try await primeFactorsOptimized(of: 5040)
-    #expect(result == [2,2,2,2,3,3,5,7])
   }
 
   @Test("Concurrent factorization")
@@ -46,24 +40,10 @@ struct PrimeFactorizationTests2 {
     #expect(results[18] == [2,3,3])
     #expect(results[100] == [2,2,5,5])
     #expect(results.count == 5)
-
-  }
-
-  @Test("Error: invalid number")
-  func errorCase() async {
-    do {
-      _ = try await primeFactors(of: -1)
-      #expect(Bool(false), "Should throw on -1")
-    } catch {
-      #expect(error is PrimeFactorizationError)
-      if case .invalidInput(let msg) = error as? PrimeFactorizationError {
-        #expect(msg.contains("must be greater than 1"))
-      }
-    }
   }
 
   @Test("Formatting extensions")
-  func formattingExtensions() async throws {
+  func formattingExtensions() {
     let arr = [2,2,3,3,3,5]
     #expect(arr.simpleArrayDescription == "[2, 2, 3, 3, 3, 5]")
     #expect(arr.primeFactorizationString == "2^2 × 3^3 × 5")

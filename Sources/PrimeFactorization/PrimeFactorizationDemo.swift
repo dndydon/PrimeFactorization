@@ -3,33 +3,32 @@
 //  PrimeFactorization
 //
 //  Demonstrates usage of the prime factorization functions.
-//
 
 import Foundation
 
 /// Demonstrates various prime factorization features.
+/// Called by PrimeFactorizationTests file
 ///
 /// This function showcases:
-/// - Single number factorization with async/await
+/// - Single number factorization
 /// - Concurrent factorization of multiple numbers
-/// - Optimized algorithms for large numbers
 /// - Formatted output using array extensions
 @available(macOS 10.15, iOS 15.0, *)
 public func demonstratePrimeFactorization() async {
   do {
-    print("🔢 Prime Factorization Demo\n")
+    print("Prime Factorization Demo\n")
     print("=" + String(repeating: "=", count: 50))
     
     // Single number factorization
-    print("\n1️⃣  Single Number Factorization")
+    print("\n1. Single Number Factorization")
     print("-" + String(repeating: "-", count: 50))
     let number = 5040
-    let factors = try await primeFactors(of: number)
+    let factors = number.primeFactors
     print("\(number) = \(factors.primeFactorizationString)")
     print("Factors: \(factors.simpleArrayDescription)\n")
     
     // Multiple numbers concurrently
-    print("2️⃣  Concurrent Factorization")
+    print("2. Concurrent Factorization")
     print("-" + String(repeating: "-", count: 50))
     let numbers = [101, 1001, 1234, 2234, 3234]
     let results = try await primeFactorsConcurrent(of: numbers)
@@ -37,19 +36,19 @@ public func demonstratePrimeFactorization() async {
       print("\(num) = \(factors.primeFactorizationString)")
     }
     
-    // Using optimized version for large numbers
-    print("\n3️⃣  Optimized Algorithm for Large Numbers")
+    // Large number
+    print("\n3. Large Number Factorization")
     print("-" + String(repeating: "-", count: 50))
     let largeNumber = 987654321
-    let optimizedFactors = try await primeFactorsOptimized(of: largeNumber)
-    print("\(largeNumber) = \(optimizedFactors.primeFactorizationString)")
-    print("Factors: \(optimizedFactors.simpleArrayDescription)\n")
+    let largeFactors = largeNumber.primeFactors
+    print("\(largeNumber) = \(largeFactors.primeFactorizationString)")
+    print("Factors: \(largeFactors.simpleArrayDescription)\n")
     
     print("=" + String(repeating: "=", count: 50))
-    print("✅ Demo completed successfully!")
+    print("Demo completed successfully!")
     
   } catch {
-    print("❌ Error: \(error)")
+    print("Error: \(error)")
     if let pfError = error as? PrimeFactorizationError {
       switch pfError {
       case .invalidInput(let msg):
@@ -62,6 +61,7 @@ public func demonstratePrimeFactorization() async {
 }
 
 
+/// Called by PrimeFactorizationTests file
 @available(macOS 12.0, iOS 15.0, *)
 func benchmarkPrimeGeneration() async {
   let testRanges = [
@@ -72,13 +72,12 @@ func benchmarkPrimeGeneration() async {
     ("Max Default (15M)", 2, 15_000_000),
   ]
 
-  print("🔬 Prime Generation Benchmark")
+  print("Prime Generation Benchmark")
   print("=" + String(repeating: "=", count: 70))
   print("Note: Temporarily increasing maxPrimeRange for benchmarking...\n")
   
-  // Store original value and increase for benchmarking
-  let originalMax = PrimeFactorizationSyncConfig.shared.maxPrimeRange
-  PrimeFactorizationSyncConfig.shared.maxPrimeRange = 200_000_000 // Allow up to 200M for testing
+  let originalMax = PrimeFactorizationConfig.shared.maxPrimeRange
+  PrimeFactorizationConfig.shared.maxPrimeRange = 200_000_000
 
   for (label, start, end) in testRanges {
     let rangeSize = end - start
@@ -101,20 +100,18 @@ func benchmarkPrimeGeneration() async {
       print("  Memory delta: \(String(format: "%.2f", Double(memoryDelta) / 1024 / 1024)) MB")
       print("  Throughput: \(String(format: "%.0f", Double(rangeSize) / elapsed)) numbers/sec")
 
-      // User experience thresholds
-      let rating = elapsed < 1.0 ? "✅ Excellent" :
-      elapsed < 3.0 ? "✓ Good" :
-      elapsed < 10.0 ? "⚠️ Acceptable" :
-      "❌ Too Slow"
+      let rating = elapsed < 1.0 ? "Excellent" :
+      elapsed < 3.0 ? "Good" :
+      elapsed < 10.0 ? "Acceptable" :
+      "Too Slow"
       print("  Rating: \(rating)")
 
     } catch {
-      print("\n\(label): ❌ Error - \(error)")
+      print("\n\(label): Error - \(error)")
     }
   }
 
-  // Restore original max range
-  PrimeFactorizationSyncConfig.shared.maxPrimeRange = originalMax
+  PrimeFactorizationConfig.shared.maxPrimeRange = originalMax
   print("\n" + String(repeating: "=", count: 70))
   print("Restored maxPrimeRange to \(originalMax.formatted())")
 }

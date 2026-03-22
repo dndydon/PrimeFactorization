@@ -1,186 +1,129 @@
-# Migration Guide: Consolidating PrimeFactorization2
+# Migration Guide: v2.0 to v3.0
 
-## Date: March 16, 2026
+## Date: March 21, 2026
 
-This document describes the consolidation of `PrimeFactorization2.swift` into the main `PrimeFactorization.swift` file to resolve namespace conflicts.
+This document describes the v3.0 API consolidation that unified duplicate implementations behind the `PrimeFactorizable` protocol.
 
----
+## Quick Reference
 
-## Summary of Changes
+| v2.0 | v3.0 |
+|------|------|
+| `n.fastPrimeFactors` | `n.primeFactors` |
+| `try await primeFactors(of: n)` | `n.primeFactors` |
+| `try await primeFactorsOptimized(of: n)` | `n.primeFactors` |
+| `allFactors(of: n)` | `n.allFactors` |
+| `PrimeFactorizationSyncConfig.shared` | `PrimeFactorizationConfig.shared` |
+| `await PrimeFactorizationConfig.maxPrimeRange` | `PrimeFactorizationConfig.shared.maxPrimeRange` |
+| `PrimeIteratorSequence(from: a, through: b)` | `try primeNumbers(from: a, through: b)` |
 
-### ✅ Files Merged
-- **PrimeFactorization2.swift** → merged into **PrimeFactorization.swift**
-- **PrimeFactorizationExtensions.swift** → merged into **PrimeFactorization.swift**
+## Detailed Changes
 
-### 📝 Files Updated
-- **PrimeFactorization.swift** - Added async functions and array extensions
-- **PrimeFactorizationDemo.swift** - Updated to use consolidated API
-- **PrimeFactorizationTests2.swift** - Fixed error handling
-- **README.md** - Documented async/await APIs
+### 1. `fastPrimeFactors` renamed to `primeFactors`
 
----
-
-## Namespace Conflicts Resolved
-
-### Error Enum Duplication
-
-**Before (Conflicting Definitions):**
-
-In `PrimeFactorization.swift`:
-```swift
-public enum PrimeFactorizationError: Error, Equatable {
-  case invalidInput(String)
-  case rangeTooLarge(Int)
-}
-```
-
-In `PrimeFactorization2.swift`:
-```swift
-public enum PrimeFactorizationError: Error, LocalizedError {
-  case invalidNumber
-}
-```
-
-**After (Unified Definition):**
-```swift
-public enum PrimeFactorizationError: Error, Equatable {
-  case invalidInput(String)
-  case rangeTooLarge(Int)
-}
-```
-
-The unified error enum uses associated values for better error messages.
-
----
-
-## API Consolidation
-
-### New Async Functions (Added to Main File)
-
-All async functions now use the unified `PrimeFactorizationError`:
-
-```swift
-// Basic async version
-public func primeFactors(of: Int) async throws -> [Int]
-
-// Optimized async version  
-public func primeFactorsOptimized(of: Int) async throws -> [Int]
-
-// Concurrent version
-public func primeFactorsConcurrent(of: [Int]) async throws -> [Int: [Int]]
-```
-
-### Array Extensions (Added to Main File)
-
-```swift
-extension Array where Element == Int {
-  var simpleArrayDescription: String
-  var primeFactorizationString: String  
-}
-```
-
----
-
-## Migration for Existing Code
-
-### If You Were Using PrimeFactorization2
-
-#### Error Handling
+The optimizations from `fastPrimeFactors` (`trailingZeroBitCount`, `reserveCapacity`, branch-optimized loops) are now built into `primeFactors`. There is no longer a separate "fast" variant.
 
 **Before:**
 ```swift
-do {
-  let factors = try await primeFactors(of: -1)
-} catch {
-  if error == .invalidNumber {
-    print("Invalid")
-  }
+let factors = 60.fastPrimeFactors
+```
+
+**After:**
+```swift
+let factors = 60.primeFactors
+```
+
+### 2. Async free functions removed
+
+The sync `.primeFactors` property is fast enough for all practical inputs (even `Int.max` factors in under a second). The async wrappers added overhead without benefit.
+
+**Before:**
+```swift
+let factors = try await primeFactors(of: 5040)
+let optimized = try await primeFactorsOptimized(of: 987654321)
+```
+
+**After:**
+```swift
+let factors = 5040.primeFactors
+let optimized = 987654321.primeFactors
+```
+
+For batch processing, `primeFactorsConcurrent(of:)` is still available:
+```swift
+let results = try await primeFactorsConcurrent(of: [12, 18, 24])
+```
+
+### 3. `allFactors(of:)` is now a property
+
+**Before:**
+```swift
+let factors = allFactors(of: 60)
+```
+
+**After:**
+```swift
+let factors = 60.allFactors
+```
+
+This also works on `Int64` and `UInt`:
+```swift
+let factors = Int64(60).allFactors
+```
+
+### 4. Configuration simplified
+
+The actor-based `PrimeFactorizationConfig` and lock-based `PrimeFactorizationSyncConfig` have been merged into a single `PrimeFactorizationConfig` class.
+
+**Before:**
+```swift
+PrimeFactorizationSyncConfig.shared.maxPrimeRange = 50_000_000
+// or
+await PrimeFactorizationConfig.setMaxPrimeRange(50_000_000)
+```
+
+**After:**
+```swift
+PrimeFactorizationConfig.shared.maxPrimeRange = 50_000_000
+```
+
+### 5. `PrimeIteratorSequence` removed
+
+It pre-computed all primes in its initializer, providing no memory advantage over `primeNumbers(from:through:)`.
+
+**Before:**
+```swift
+for prime in PrimeIteratorSequence(from: 100, through: 200) {
+    print(prime)
 }
 ```
 
 **After:**
 ```swift
-do {
-  let factors = try await primeFactors(of: -1)
-} catch {
-  if case .invalidInput(let msg) = error as? PrimeFactorizationError {
-    print("Invalid: \(msg)")
-  }
+for prime in try primeNumbers(from: 100, through: 200) {
+    print(prime)
 }
 ```
 
-#### Function Calls (No Change)
+### 6. Generic type support
 
-All async function calls remain the same:
+`Int64` and `UInt` now have `primeFactors`, `isPrime`, and `allFactors` through the `PrimeFactorizable` protocol:
+
 ```swift
-// ✅ Still works exactly the same
-let factors = try await primeFactors(of: 12345)
-let optimized = try await primeFactorsOptimized(of: 5040)
-let concurrent = try await primeFactorsConcurrent(of: [12, 18, 24])
+Int64(600_000_000_004).primeFactors  // [2, 2, 3, 50000000001]
+UInt(97).isPrime                      // true
+Int64(60).allFactors                  // [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60]
 ```
 
----
+## Unchanged APIs
 
-## What's Different?
-
-### Error Messages Are More Descriptive
-
-**Before:**
-```
-Error: invalidNumber
-```
-
-**After:**
-```
-Error: Number must be greater than 1, got -5
-```
-
-### Consistent Error Types
-
-All functions now use the same error enum, making error handling consistent across the entire API.
-
----
-
-## Testing the Migration
-
-### Run Tests
-```bash
-swift test
-```
-
-### Expected Results
-- All tests in `PrimeFactorizationTests.swift` should pass
-- All tests in `PrimeFactorizationTests2.swift` should pass
-- No build errors about duplicate definitions
-
----
-
-## Benefits of This Consolidation
-
-1. **✅ No More Namespace Conflicts** - Single source of truth for error types
-2. **✅ Better Documentation** - All APIs documented in one place
-3. **✅ Easier Maintenance** - One file to update instead of multiple
-4. **✅ Cleaner API** - Consistent error handling across all functions
-5. **✅ Better Error Messages** - Associated values provide context
-
----
-
-## Performance Notes
-
-No performance changes - the async algorithms are identical to the PrimeFactorization2 versions, just relocated.
-
----
-
-## Support
-
-If you encounter any issues after migration:
-1. Check that you're using the correct error enum cases (`.invalidInput` instead of `.invalidNumber`)
-2. Verify all imports reference `PrimeFactorization` (not `PrimeFactorization2`)
-3. Ensure tests are using `try await` for async functions
-
----
-
-## Version History
-
-- **v1.0** - Initial separate implementations
-- **v2.0** - Consolidated into single file (this migration)
+These work exactly as before:
+- `n.primeFactors` (on `Int`)
+- `n.isPrime` (on `Int`)
+- `n.largestPrimeFactor`
+- `n.smallestPrimeFactor`
+- `primeNumbers(from:through:)`
+- `primeFactorsConcurrent(of:)`
+- `PrimeGenerator` actor
+- `PrimeFactorizationError`
+- `[Int].simpleArrayDescription`
+- `[Int].primeFactorizationString`

@@ -1,183 +1,64 @@
-# PrimeFactorization Package - Consolidation Complete ✅
+# PrimeFactorization v3.0 - API Consolidation
+
+## Date: March 21, 2026
 
 ## Summary
 
-Successfully resolved all namespace conflicts by consolidating `PrimeFactorization2.swift` and `PrimeFactorizationExtensions.swift` into the main `PrimeFactorization.swift` file.
+Consolidated ~60 public symbols with significant overlap into ~20 focused symbols with one clear way to do each operation. The API now provides type flexibility via the `PrimeFactorizable` protocol while maintaining high performance through `Int`-specific optimized overrides.
 
----
+## What Changed
 
-## ✅ What Was Done
+### Unified Prime Operations via Protocol
 
-### 1. Merged All Async Functions
-Added to `PrimeFactorization.swift`:
-- ✅ `primeFactors(of: Int) async throws -> [Int]`
-- ✅ `primeFactorsOptimized(of: Int) async throws -> [Int]`
-- ✅ `primeFactorsConcurrent(of: [Int]) async throws -> [Int: [Int]]`
+Before: 3 ways to get prime factors of an `Int`, 2 `isPrime` implementations, separate `allFactors(of:)` free function.
 
-### 2. Merged Array Extensions
-Added to `PrimeFactorization.swift`:
-- ✅ `[Int].simpleArrayDescription` → "[2, 3, 5]"
-- ✅ `[Int].primeFactorizationString` → "2² × 3 × 5"
+After: One `PrimeFactorizable` protocol with generic defaults for `primeFactors`, `isPrime`, and `allFactors`. `Int` provides optimized overrides. Works on `Int`, `Int64`, and `UInt`.
 
-### 3. Unified Error Handling
-- ✅ Removed duplicate `PrimeFactorizationError` enum
-- ✅ All functions now use consistent error types
-- ✅ Better error messages with associated values
+### Removed Duplicate APIs
 
-### 4. Updated Documentation
-- ✅ Updated `README.md` with async API examples
-- ✅ Updated `PrimeFactorizationDemo.swift` with better examples
-- ✅ Fixed error handling in `PrimeFactorizationTests2.swift`
-- ✅ Created `MIGRATION.md` guide
-- ✅ Created cleanup script
+| Removed | Replacement |
+|---------|-------------|
+| `Int.fastPrimeFactors` | Optimizations folded into `Int.primeFactors` |
+| `primeFactors(of:) async throws` | Use sync `.primeFactors` (fast enough) |
+| `primeFactorsOptimized(of:) async throws` | Use sync `.primeFactors` |
+| `PrimeIteratorSequence` | Use `primeNumbers(from:through:)` |
+| `PrimeFactorizationConfig` actor | Renamed `PrimeFactorizationSyncConfig` to `PrimeFactorizationConfig` |
+| `View.primeFactorization(of:)` | Removed (incomplete stub) |
+| `allFactors(of:)` free function | Use `.allFactors` property |
+| `doubleValue` protocol requirement | Removed (not needed) |
 
----
+### Kept
 
-## 🎯 Build Status
+| Symbol | Reason |
+|--------|--------|
+| `primeFactorsConcurrent(of:)` | Useful for batch processing multiple numbers |
+| `PrimeGenerator` actor | Caching + Sieve of Eratosthenes serves distinct use cases |
+| `primeNumbers(from:through:)` | Primary prime generation API |
 
-All namespace conflicts resolved:
-- ❌ **Before:** Multiple `PrimeFactorizationError` definitions causing build errors
-- ✅ **After:** Single unified error enum, clean build
+### Performance Improvements
 
----
+- `Int.primeFactors` now incorporates all optimizations from the former `fastPrimeFactors`: `trailingZeroBitCount` for fast factor-2 extraction, `reserveCapacity(32)`, and branch-optimized `if/repeat-while` loops
+- `Int.isPrime` uses integer-only arithmetic (removed `Double.squareRoot()` dependency)
+- Both use `multipliedReportingOverflow` for overflow-safe loop bounds
+- `startCursor(from:)` made private (was leaked as internal)
 
-## 📁 File Structure
+## File Organization
 
-### ✅ Consolidated Into
-```
-PrimeFactorization.swift (584 lines)
-├── Error Types
-├── Constants
-├── Prime Factorization (sync)
-├── Prime Checking
-├── Prime Factor Utilities
-├── All Factors
-├── Sieve of Eratosthenes
-├── Prime Generation (6k±1)
-├── Public Prime API
-├── Prime Iterator
-├── Async Prime Factorization (NEW)
-└── Array Extensions (NEW)
-```
+| File | Lines | Contents |
+|------|-------|----------|
+| `PrimeFactorizable.swift` | 236 | Protocol, conformances, generic defaults, Int overrides |
+| `PrimeFactorization.swift` | 174 | Error, config, utilities, prime generation |
+| `PrimeGenerator.swift` | 114 | Actor (caching + sieve), `primeFactorsConcurrent` |
+| `PrimeFactorizationDemo.swift` | 134 | Demo functions |
 
-### 🗑️ Files to Remove (After Testing)
-```
-❌ PrimeFactorization2.swift
-❌ PrimeFactorizationExtensions.swift
-```
+Total source: ~658 lines (down from ~978)
 
-Use the provided `cleanup.sh` script to remove them safely.
+## Test Results
 
----
+49 tests: 49 passed, 0 failed
 
-## 🧪 Testing
+## Version History
 
-### Run All Tests
-```bash
-swift test
-```
-
-### Expected Passing Tests
-- ✅ All sync prime operations
-- ✅ All async prime factorization
-- ✅ Concurrent processing
-- ✅ Error handling with new error types
-- ✅ Array formatting extensions
-
----
-
-## 📊 API Comparison
-
-### Error Handling
-
-| Before (Conflicted) | After (Unified) |
-|-------------------|----------------|
-| `.invalidNumber` | `.invalidInput(String)` |
-| N/A | `.rangeTooLarge(Int)` |
-
-### Function Signatures (Unchanged)
-
-All async function signatures remain the same:
-```swift
-// ✅ No changes to function calls
-try await primeFactors(of: 12345)
-try await primeFactorsOptimized(of: 5040)
-try await primeFactorsConcurrent(of: [12, 18, 24])
-```
-
----
-
-## 💡 Key Improvements
-
-1. **Single Source of Truth**
-   - All prime operations in one file
-   - No duplicate definitions
-
-2. **Better Error Messages**
-   ```swift
-   // Before: "invalidNumber"
-   // After:  "Number must be greater than 1, got -5"
-   ```
-
-3. **Consistent API**
-   - All functions use the same error enum
-   - Uniform error handling patterns
-
-4. **Better Documentation**
-   - Full doc comments for all async functions
-   - Examples in README
-   - Migration guide included
-
-5. **Easier Maintenance**
-   - One file to update
-   - Clear organization with MARK comments
-
----
-
-## 📝 Documentation Files
-
-Created/Updated:
-- ✅ `README.md` - Now includes async API docs
-- ✅ `MIGRATION.md` - Complete migration guide
-- ✅ `CONSOLIDATION_SUMMARY.md` - This file
-- ✅ `CHANGES.md` - Full change history
-
----
-
-## 🎉 Status: READY FOR USE
-
-The package now has:
-- ✅ No namespace conflicts
-- ✅ Clean build
-- ✅ Unified API
-- ✅ Comprehensive documentation
-- ✅ Both sync and async operations
-- ✅ All tests updated and passing
-
-**You can now safely use all features without build errors!**
-
----
-
-## 📞 Support
-
-If you encounter any issues:
-
-1. **Build Errors:**
-   - Make sure old files are deleted
-   - Clean build folder: `swift package clean`
-
-2. **Test Failures:**
-   - Check error handling uses `.invalidInput` not `.invalidNumber`
-   - Verify async functions use `try await`
-
-3. **Runtime Errors:**
-   - Review error messages for guidance
-   - Check parameter ranges and validity
-
----
-
-## Version
-
-- **Package Version:** 2.0 (Consolidated)
-- **Swift Version:** 6.0
-- **Date:** March 16, 2026
+- **v1.0** - Initial implementation
+- **v2.0** - Namespace conflict resolution, async API consolidation
+- **v3.0** - API consolidation: unified protocol, removed duplicates, optimized Int overrides

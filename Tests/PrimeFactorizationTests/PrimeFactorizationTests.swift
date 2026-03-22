@@ -21,39 +21,7 @@ import Foundation // for CFAbsoluteTimeGetCurrent()
   }
 
   @available(macOS 10.15, iOS 15.0, *)
-  @Test("Speed comparison: classic vs optimized prime factorization")
-  func comparePrimeFactorizationSpeeds() async throws {
-    let testNumbers = Array(3_000...18_500)
-
-    // Time classic primeFactors
-    let startClassic = CFAbsoluteTimeGetCurrent()
-    for number in testNumbers {
-      _ = number.primeFactors
-    }
-    let endClassic = CFAbsoluteTimeGetCurrent()
-    let elapsedClassic = endClassic - startClassic
-    let classicRate = Double(testNumbers.count) / elapsedClassic // iterations per second
-
-    // Time optimized version
-    let startOptimized = CFAbsoluteTimeGetCurrent()
-    for number in testNumbers {
-      _ = try await primeFactorsOptimized(of: number)
-    }
-    let endOptimized = CFAbsoluteTimeGetCurrent()
-    let elapsedOptimized = endOptimized - startOptimized
-    let optimizedRate = Double(testNumbers.count) / elapsedOptimized // iterations per second
-
-    // Calculate and print comparison statistics
-    let (winner, faster, slower) = elapsedClassic < elapsedOptimized ? ("primeFactors classic", elapsedClassic, elapsedOptimized) : ("primeFactorsOptimized(of:)", elapsedOptimized, elapsedClassic)
-    let percentFaster = ((slower - faster) / slower)
-    print("\(winner) is \(percentFaster.formatted(.percent)) faster (classic: \(elapsedClassic.formatted()), optimized: \(elapsedOptimized.formatted()))")
-    print(Int(classicRate).formatted(.number), "iterations per second (classic)")
-    print(Int(optimizedRate).formatted(.number), "iterations per second (optimized)")
-    #expect(optimizedRate < classicRate, "Optimized version should be faster")
-  }
-
-  @available(macOS 10.15, iOS 15.0, *)
-  @Test("prime factorization demonstration 2")
+  @Test("prime factorization demonstration")
   func testPrimeFactorization() async throws {
     await demonstratePrimeFactorization()
   }
@@ -62,48 +30,6 @@ import Foundation // for CFAbsoluteTimeGetCurrent()
   @Test("benchmark Prime Generation demonstration")
   func benchmarkPrimeFactorization() async throws {
     await benchmarkPrimeGeneration()
-    /*
-     Baseline (1M)
-     Range: 1,000,000 (2...1,000,000)
-     Primes found: 78,498
-     Time: 0.11 seconds
-     Memory delta: 1.16 MB
-     Throughput: 9165153 numbers/sec
-     Rating: ✅ Excellent
-
-     Medium (5M)
-     Range: 5,000,000 (2...5,000,000)
-     Primes found: 348,513
-     Time: 0.74 seconds
-     Memory delta: 4.70 MB
-     Throughput: 6780681 numbers/sec
-     Rating: ✅ Excellent
-
-     Current Default (15M)
-     Range: 15,000,000 (2...15,000,000)
-     Primes found: 970,704
-     Time: 3.07 seconds
-     Memory delta: 15.64 MB
-     Throughput: 4892880 numbers/sec
-     Rating: ⚠️ Acceptable
-
-     Double (30M)
-     Range: 15,000,000 (15,000,000...30,000,000)
-     Primes found: 887,155
-     Time: 4.60 seconds
-     Memory delta: 0.67 MB
-     Throughput: 3260543 numbers/sec
-     Rating: ⚠️ Acceptable
-
-     Large (50M)
-     Range: 15,000,000 (35,000,000...50,000,000)
-     Primes found: 854,359
-     Time: 5.79 seconds
-     Memory delta: 0.02 MB
-     Throughput: 2591993 numbers/sec
-     Rating: ⚠️ Acceptable
-
-     */
   }
 
   // same as above except that it uses the new primeNumbers()
@@ -184,8 +110,8 @@ import Foundation // for CFAbsoluteTimeGetCurrent()
   }
 
   @Test func testAllFactors() async throws {
-    let testSet = ([  //-1, 0, 1, 2, 3, 5, 33, 60, 48837371
-      (-1, []),
+    let testSet = ([
+      (-1, [Int]()),
       (0, []),
       (1, [1]),
       (2, [1, 2]),
@@ -196,15 +122,16 @@ import Foundation // for CFAbsoluteTimeGetCurrent()
       (48837371, [1, 11, 47, 517, 94463, 1039093, 4439761, 48837371]),
                    ]).map { $0 }
     for (test, truth) in testSet {
-      let factors = allFactors(of: test)
+      let factors = test.allFactors
       print("allFactors of \(test):", factors)
       #expect(factors == truth)
     }
   }
 
-
+  
+    /// Test the 10 largest Ints
   @Test func primeFactorsTest() async throws {
-    let testRange =  (Int.max - 10)...Int.max // test with 10 largest Ints
+    let testRange =  (Int.max - 9)...Int.max // test with 10 largest Ints
     let keys = testRange.map { $0 }
     let values = keys.map { $0.primeFactors }
     for (k, v) in zip(keys, values).sorted(by: { $0.0 < $1.0 }) {
@@ -212,29 +139,12 @@ import Foundation // for CFAbsoluteTimeGetCurrent()
     }
   }
 
-  @Test func startCursorTest() async throws {
-    let testRange =  1...400
-    let testSet = testRange.map { $0 }
-    var results: [Int: [Int]] = [:]
-    for test in testSet {
-      let cursor = startCursor(from: test)
-      //print(test, cursors.description)
-      results[test] = [cursor, cursor+2]
-    }
-    let krell = results.sorted(by: { $0.key < $1.key })
-    for (k, v) in krell {
-      print(k, v, v.map(\.isPrime))
-    }
-  }
-
   @available(macOS 10.15, iOS 15.0, *)
   @Test func primeNumbersTest() async throws {
-    let testRange =  (Int.max - 300)...(Int.max)  // [9223372036854775549, 9223372036854775643, 9223372036854775783]
-    //let testRange = 80...950   // 80...950: [83, 89, 97, 101]...[883, 887, 907, 911, 919, 929, 937, 941, 947]
-    let primes = PrimeIteratorSequence(from: testRange.lowerBound, through: testRange.upperBound).map { $0 }
-    //let primes = primeNumbers(from: testRange.lowerBound, through: testRange.upperBound).map { $0 }
+    let testRange =  (Int.max - 300)...(Int.max)
+    let primes = try primeNumbers(from: testRange.lowerBound, through: testRange.upperBound)
     print(primes.count.formatted(), "Primes found in test range: \(testRange.lowerBound) ... \(testRange.upperBound)" )
-    if primes.count > 11 {  // too many to print all
+    if primes.count > 11 {
       let prefixP = primes.prefix(upTo: 4)
       let suffixP = primes.suffix(9)
       print(prefixP.description + "..." + suffixP.description)
@@ -246,7 +156,7 @@ import Foundation // for CFAbsoluteTimeGetCurrent()
   @available(macOS 10.15, iOS 15.0, *)
   @Test("primesByJump6Method Test")
   func primesByJump6MethodTest() async throws {
-    let testRange = 1...500_000   // 41,538 Primes in 0.065 sec [2, 3, 5, 7]...[499883, 499897, 499903, 499927, 499943, 499957, 499969, 499973, 499979]
+    let testRange = 1...500_000
     let primes = try primeNumbers(from: testRange.lowerBound, through: testRange.upperBound)
     print(primes.count.formatted(), "Primes found in testRange" )
     if primes.count > 11 {
@@ -265,7 +175,7 @@ import Foundation // for CFAbsoluteTimeGetCurrent()
     let expectedPrimes: [Int]
   }
 
-  @Test func primeIteratorTest() async throws {
+  @Test func primeRangeTest() async throws {
     let tArgs: [testArgs] = [
       testArgs(testLabel: "Small Range", start: 2, end: 37,
                expectedPrimes: [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37]),
@@ -279,17 +189,10 @@ import Foundation // for CFAbsoluteTimeGetCurrent()
       let upperBound: Int = args.end
       let expectedPrimes: [Int] = args.expectedPrimes
       print("Testing from \(lowerBound) to \(upperBound)")
-      var result: [Int] = []
 
-      result = []
-      let primes = PrimeIteratorSequence(from: lowerBound, through: upperBound)
-      // use the iterator here...
-      for nextPrime in primes {
-        result.append(nextPrime)
-      }
+      let result = try primeNumbers(from: lowerBound, through: upperBound)
       print("primes from \(lowerBound) to \(upperBound):", result, "\n")
       #expect(result == expectedPrimes)
     }
   }
 }
-
