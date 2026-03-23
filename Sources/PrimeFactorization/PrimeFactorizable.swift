@@ -144,8 +144,10 @@ public extension Int {
 
     /// Returns the prime factors of the integer in ascending order.
     ///
-    /// This `Int`-specific override uses bit operations (`trailingZeroBitCount`) for fast
-    /// power-of-2 extraction and branch-optimized inner loops for better performance.
+    /// This `Int`-specific override uses a pre-computed table of 1,000 small primes
+    /// for trial division (covering numbers up to ~62.7 million completely), then falls
+    /// back to the 6k±1 method for larger divisors. Also uses `trailingZeroBitCount`
+    /// for fast power-of-2 extraction.
     ///
     /// - Returns: An array of prime factors. Returns an empty array for values <= 1.
     /// - Complexity: O(sqrt(n))
@@ -168,14 +170,25 @@ public extension Int {
             n >>= trailingZeros
         }
 
-        // Handle factor 3
-        while n % 3 == 0 {
-            factors.append(3)
-            n /= 3
+        // Trial division using pre-computed primes table (skip index 0 = prime 2, already handled)
+        for i in 1..<smallPrimes.count {
+            let p = smallPrimes[i]
+            if p * p > n { break }
+            if n % p == 0 {
+                repeat {
+                    factors.append(p)
+                    n /= p
+                } while n % p == 0
+            }
         }
 
-        // 6k±1 with overflow-safe bound and branch-optimized inner loop
-        var divisor = 5
+        // Continue with 6k±1 for divisors beyond the table
+        let lastTablePrime = smallPrimes.last!
+        // Start from the next 6k-1 candidate after the last table prime
+        var divisor = lastTablePrime + (6 - lastTablePrime % 6) + 5
+        // Ensure we don't re-test primes already in the table
+        if divisor <= lastTablePrime { divisor += 6 }
+
         while true {
             let (square, overflow) = divisor.multipliedReportingOverflow(by: divisor)
             if overflow || square > n { break }
@@ -207,8 +220,8 @@ public extension Int {
 
     /// Returns `true` if the integer is a prime number.
     ///
-    /// This `Int`-specific override uses bit operations for the even check and
-    /// overflow-safe integer arithmetic for the loop bound.
+    /// This `Int`-specific override uses the pre-computed small primes table for
+    /// trial division, then falls back to 6k±1 for larger divisors.
     ///
     /// - Complexity: O(sqrt(n))
     ///
@@ -219,9 +232,20 @@ public extension Int {
     var isPrime: Bool {
         if self <= 1 { return false }
         if self <= 3 { return true }
-        if self & 1 == 0 || self % 3 == 0 { return false }
+        if self & 1 == 0 { return false }
 
-        var divisor = 5
+        // Check divisibility against pre-computed primes table
+        for i in 1..<smallPrimes.count {
+            let p = smallPrimes[i]
+            if p * p > self { return true }
+            if self % p == 0 { return false }
+        }
+
+        // Continue with 6k±1 for divisors beyond the table
+        let lastTablePrime = smallPrimes.last!
+        var divisor = lastTablePrime + (6 - lastTablePrime % 6) + 5
+        if divisor <= lastTablePrime { divisor += 6 }
+
         while true {
             let (square, overflow) = divisor.multipliedReportingOverflow(by: divisor)
             if overflow || square > self { break }

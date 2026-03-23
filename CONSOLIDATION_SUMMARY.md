@@ -1,6 +1,6 @@
-# PrimeFactorization v3.0 - API Consolidation
+# PrimeFactorization v3.1 - API Consolidation + Small Primes Table
 
-## Date: March 21, 2026
+## Date: March 22, 2026
 
 ## Summary
 
@@ -37,28 +37,30 @@ After: One `PrimeFactorizable` protocol with generic defaults for `primeFactors`
 
 ### Performance Improvements
 
-- `Int.primeFactors` now incorporates all optimizations from the former `fastPrimeFactors`: `trailingZeroBitCount` for fast factor-2 extraction, `reserveCapacity(32)`, and branch-optimized `if/repeat-while` loops
+- `Int.primeFactors` and `Int.isPrime` use a pre-computed table of 1,000 small primes (2 through 7,919) as trial divisors, skipping composite candidates and covering complete factorization up to ~62.7 million without the 6k±1 fallback loop
+- `trailingZeroBitCount` for fast factor-2 extraction, `reserveCapacity(32)`, and branch-optimized `if/repeat-while` loops
 - `Int.isPrime` uses integer-only arithmetic (removed `Double.squareRoot()` dependency)
-- Both use `multipliedReportingOverflow` for overflow-safe loop bounds
+- Both fall back to 6k±1 with `multipliedReportingOverflow` for overflow-safe loop bounds beyond the table
+- `PrimeGenerator.primes(upTo:)` returns a slice of the table instantly for limits <= 7,919
 - `startCursor(from:)` made private (was leaked as internal)
 
 ## File Organization
 
 | File | Lines | Contents |
 |------|-------|----------|
-| `PrimeFactorizable.swift` | 236 | Protocol, conformances, generic defaults, Int overrides |
+| `PrimeFactorizable.swift` | 246 | Protocol, conformances, generic defaults, Int overrides |
 | `PrimeFactorization.swift` | 174 | Error, config, utilities, prime generation |
-| `PrimeGenerator.swift` | 114 | Actor (caching + sieve), `primeFactorsConcurrent` |
+| `PrimeGenerator.swift` | 120 | Actor (caching + sieve), `primeFactorsConcurrent` |
+| `SmallPrimes.swift` | 114 | Pre-computed table of first 1,000 primes (2--7,919) |
 | `PrimeFactorizationDemo.swift` | 134 | Demo functions |
-
-Total source: ~658 lines (down from ~978)
 
 ## Test Results
 
-49 tests: 49 passed, 0 failed
+51 tests: 51 passed, 0 failed
 
 ## Version History
 
 - **v1.0** - Initial implementation
 - **v2.0** - Namespace conflict resolution, async API consolidation
 - **v3.0** - API consolidation: unified protocol, removed duplicates, optimized Int overrides
+- **v3.1** - Pre-computed small primes table for faster trial division

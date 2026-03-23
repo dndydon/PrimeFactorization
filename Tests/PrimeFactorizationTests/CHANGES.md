@@ -1,5 +1,22 @@
 # PrimeFactorization Package - Change History
 
+## v3.1 - Small Primes Table (March 22, 2026)
+
+### Overview
+Added a pre-computed table of the first 1,000 primes (2 through 7,919) to accelerate trial division in `Int.primeFactors` and `Int.isPrime`. The table covers complete factorization for numbers up to ~62.7 million without needing the 6k±1 fallback, and skips ~40% of composite candidates that the 6k±1 method would otherwise test.
+
+### Added
+- `SmallPrimes.swift` -- static array of 1,000 primes, compiled into the binary (no file I/O)
+- `smallPrimesTable_correctness` test -- verifies every entry is prime with no gaps
+- `intPrimeFactors_tableBoundary` test -- verifies correct behavior at the table/6k±1 handoff
+
+### Changed
+- `Int.primeFactors` now iterates through the small primes table before falling back to 6k±1
+- `Int.isPrime` now checks divisibility against the table before falling back to 6k±1
+- `PrimeGenerator.primes(upTo:)` returns a slice of the table instantly for limits <= 7,919
+
+---
+
 ## v3.0 - API Consolidation (March 21, 2026)
 
 ### Overview

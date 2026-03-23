@@ -2,7 +2,7 @@
 
 A Swift package providing optimized prime factorization, primality testing, and prime generation with generic type support. Works with `Int`, `Int64`, `UInt`, and any `FixedWidthInteger` conforming type.
 
-Last Updated: 2026.03.21 **v3.0**
+Last Updated: 2026.03.22 **v3.1**
 
 ## Features
 
@@ -103,10 +103,12 @@ factors.primeFactorizationString  // "2^2 x 3^3 x 5"
 
 ## Performance
 
-- `Int` gets optimized overrides with `trailingZeroBitCount` for fast power-of-2 extraction and branch-optimized inner loops
-- Generic types use `multipliedReportingOverflow` for overflow-safe arithmetic
-- All implementations use the 6k+/-1 trial division optimization
+- `Int` uses a pre-computed table of 1,000 small primes (2 through 7,919) for trial division, covering complete factorization up to ~62.7 million without the 6k+/-1 fallback
+- `trailingZeroBitCount` for fast power-of-2 extraction
+- Falls back to 6k+/-1 trial division for divisors beyond the table
+- Generic types (`Int64`, `UInt`) use `multipliedReportingOverflow` for overflow-safe arithmetic
 - O(sqrt(n)) complexity for factorization and primality testing
+- `PrimeGenerator.primes(upTo:)` returns instantly from the table for limits <= 7,919
 - In release builds, the compiler specializes generics for concrete types, closing the performance gap
 
 ## Error Handling
@@ -125,6 +127,7 @@ public enum PrimeFactorizationError: Error, Equatable {
 | `PrimeFactorizable.swift` | Protocol, conformances, generic defaults, Int overrides |
 | `PrimeFactorization.swift` | Error, config, utilities, prime generation |
 | `PrimeGenerator.swift` | Actor (caching + sieve), concurrent batch factorization |
+| `SmallPrimes.swift` | Pre-computed table of first 1,000 primes |
 | `PrimeFactorizationDemo.swift` | Demo functions |
 
 ## Requirements

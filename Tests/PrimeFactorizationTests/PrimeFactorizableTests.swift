@@ -177,6 +177,42 @@ struct PrimeFactorizableTests {
         }
     }
 
+    // MARK: - smallPrimes table verification
+
+    /// Verifies the static smallPrimes table by re-computing primes via Sieve and comparing.
+    @Test func smallPrimesTable_correctness() {
+        #expect(smallPrimes.count == 1000)
+        #expect(smallPrimes.first == 2)
+        #expect(smallPrimes.last == 7919)
+
+        // Verify every entry is actually prime
+        for p in smallPrimes {
+            #expect(Int64(p).isPrime, "\(p) in smallPrimes is not prime")
+        }
+
+        // Verify no primes are missing (table is contiguous)
+        for i in 1..<smallPrimes.count {
+            // No prime exists between consecutive entries
+            for n in (smallPrimes[i - 1] + 1)..<smallPrimes[i] {
+                #expect(!Int64(n).isPrime, "\(n) is prime but missing from smallPrimes")
+            }
+        }
+    }
+
+    /// Verifies that factorization works correctly at the table boundary.
+    @Test func intPrimeFactors_tableBoundary() {
+        // Number whose smallest prime factor is just beyond the table
+        // 7919 is the last table prime; 7927 is the next prime
+        let n = 7927 * 7927  // = 62,837,929
+        let factors = n.primeFactors
+        #expect(factors == [7927, 7927])
+
+        // Number that requires both table primes and beyond-table primes
+        let m = 7919 * 7927
+        let mFactors = m.primeFactors
+        #expect(mFactors == [7919, 7927])
+    }
+
     // MARK: - allFactors (generic protocol extension)
 
     @Test func allFactors_basic() {

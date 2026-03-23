@@ -41,11 +41,19 @@ public actor PrimeGenerator {
         return factors
     }
 
-    /// Generates all prime numbers up to the given limit using the Sieve of Eratosthenes.
+    /// Generates all prime numbers up to the given limit.
+    ///
+    /// For limits within the pre-computed small primes table (up to 7,919), returns
+    /// a slice of the table instantly. For larger limits, uses the Sieve of Eratosthenes.
     ///
     /// - Parameter limit: The upper bound (inclusive).
     /// - Returns: An array of all primes from 2 through `limit`.
     public func primes(upTo limit: Int) async -> [Int] {
+        // Fast path: return slice of pre-computed table
+        if let lastPrime = smallPrimes.last, limit <= lastPrime {
+            return smallPrimes.prefix(while: { $0 <= limit })
+        }
+
         return await Task.detached {
             await self.sieveOfEratosthenes(limit: limit)
         }.value
