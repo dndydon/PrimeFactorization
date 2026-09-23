@@ -108,9 +108,89 @@ private func startCursor(from start: Int) -> Int {
     return start + (5 - start % 6 + 6) % 6
 }
 
+// MARK: - Prime Generation (Sieves)
+
+/// Returns the largest integer whose square is <= `n`.
+private func integerSquareRoot(_ n: Int) -> Int {
+    guard n > 1 else { return max(n, 0) }
+    var root = Int(Double(n).squareRoot())
+    while root * root > n { root -= 1 }
+    while true {
+        let (square, overflow) = (root + 1).multipliedReportingOverflow(by: root + 1)
+        if overflow || square > n { break }
+        root += 1
+    }
+    return root
+}
+
+/// Returns all primes from 2 through `limit` using the Sieve of Eratosthenes.
+func sieveOfEratosthenes(limit: Int) -> [Int] {
+    guard limit >= 2 else { return [] }
+
+    var isPrime = Array(repeating: true, count: limit + 1)
+    isPrime[0] = false
+    isPrime[1] = false
+
+    var i = 2
+    while i * i <= limit {
+        if isPrime[i] {
+            for j in stride(from: i * i, through: limit, by: i) {
+                isPrime[j] = false
+            }
+        }
+        i += 1
+    }
+
+    return isPrime.enumerated().compactMap { $0.element ? $0.offset : nil }
+}
+
+/// Returns all primes in `[start, end]` using a segmented Sieve of Eratosthenes.
+///
+/// Memory is bounded by the segment size, not the range size. Offsets into each
+/// segment are used instead of absolute values so nothing overflows near `Int.max`.
+private func primesBySegmentedSieve(from start: Int, through end: Int) -> [Int] {
+    let low = max(start, 2)
+    guard low <= end else { return [] }
+
+    let basePrimes = sieveOfEratosthenes(limit: integerSquareRoot(end))
+    let segmentSize = 1 << 18
+    var primes: [Int] = []
+    var segmentStart = low
+
+    while true {
+        let segmentEnd = segmentStart + min(segmentSize - 1, end - segmentStart)
+        let count = segmentEnd - segmentStart + 1
+        var isComposite = [Bool](repeating: false, count: count)
+
+        for p in basePrimes {
+            let square = p * p
+            if square > segmentEnd { break }
+            let remainder = segmentStart % p
+            var index = max(square - segmentStart, remainder == 0 ? 0 : p - remainder)
+            while index < count {
+                isComposite[index] = true
+                index += p
+            }
+        }
+
+        for (offset, composite) in isComposite.enumerated() where !composite {
+            primes.append(segmentStart + offset)
+        }
+
+        if segmentEnd == end { break }
+        segmentStart = segmentEnd + 1
+    }
+
+    return primes
+}
+
 // MARK: - Public Prime Generation API
 
-/// Generates an array of prime numbers in a specified range using the 6k±1 method.
+/// Generates an array of prime numbers in a specified range.
+///
+/// Uses a segmented Sieve of Eratosthenes when the range is at least as wide as
+/// `sqrt(endIndex)`. Narrow ranges of very large numbers (e.g. near `Int.max`) use
+/// 6k±1 trial division instead, since sieving would need primes up to `sqrt(endIndex)`.
 ///
 /// - Parameters:
 ///   - startIndex: The lower bound of the range (inclusive). Must be positive. Default is 2.
@@ -118,7 +198,7 @@ private func startCursor(from start: Int) -> Int {
 /// - Returns: An array of all prime numbers in the range [startIndex, endIndex].
 /// - Throws: ``PrimeFactorizationError/invalidInput(_:)`` if arguments are invalid,
 ///           or ``PrimeFactorizationError/rangeTooLarge(_:)`` if the range is too large.
-/// - Complexity: O(n * sqrt(n)) where n is the size of the range.
+/// - Complexity: O(n log log n + sqrt(end)) for the sieve path, where n is the size of the range.
 ///
 /// ```swift
 /// let primes = try primeNumbers(from: 10, through: 30)
@@ -138,6 +218,9 @@ public func primeNumbers(from startIndex: Int = 2, through endIndex: Int) throws
         throw PrimeFactorizationError.rangeTooLarge(endIndex - startIndex)
     }
 
+    if integerSquareRoot(endIndex) <= endIndex - startIndex {
+        return primesBySegmentedSieve(from: startIndex, through: endIndex)
+    }
     return primesByJump6Method(from: startIndex, through: endIndex)
 }
 

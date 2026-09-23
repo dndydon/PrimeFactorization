@@ -256,16 +256,47 @@ struct PrimeFactorizableTests {
         #expect(first == [2, 2, 3, 5])
     }
 
-    // Documents the flush-all cache eviction strategy.
-    // maxCacheSize is 10000; inserting 10001 distinct numbers triggers a full flush.
-    // After the flush, a previously cached number must still return the correct result.
+    // Documents the FIFO cache eviction strategy.
+    // maxCacheSize is 10000; inserting 10001 distinct numbers evicts only the oldest entry.
     @Test func primeGeneratorFactors_cacheEviction() async {
         let g = PrimeGenerator()
         for n in 2...10_002 {
             _ = await g.primeFactors(of: n)
         }
+        let cache = await g.cache
+        #expect(cache.count == 10_000)
+        #expect(cache[2] == nil)
+        #expect(cache[3] == [3])
+        #expect(cache[10_002] == [2, 3, 1667])
+
         let result = await g.primeFactors(of: 60)
         #expect(result == [2, 2, 3, 5])
+    }
+
+    // MARK: - Generic Dispatch
+
+    private func genericPrimeFactors<T: PrimeFactorizable>(_ value: T) -> [T] { value.primeFactors }
+    private func genericIsPrime<T: PrimeFactorizable>(_ value: T) -> Bool { value.isPrime }
+
+    @Test func genericDispatch_matchesConcrete() {
+        for n in [0, 1, 2, 60, 7919, 62_710_561, 600_000_000_004, Int.max] {
+            #expect(genericPrimeFactors(n) == n.primeFactors)
+            #expect(genericIsPrime(n) == n.isPrime)
+        }
+    }
+
+    // MARK: - primeNumbers (sieve vs trial division)
+
+    @Test func primeNumbers_matchesTrialDivision() throws {
+        let ranges: [ClosedRange<Int>] = [1...2, 1...10_000, 7_900...8_000, 9_990_000...10_000_000, 1_000_000...1_001_000]
+        for range in ranges {
+            let expected = range.filter(\.isPrime)
+            #expect(try primeNumbers(from: range.lowerBound, through: range.upperBound) == expected, "\(range)")
+        }
+    }
+
+    @Test func primeNumbers_defaultMaxRange() throws {
+        #expect(try primeNumbers(through: 15_000_000).count == 970_704)
     }
 
     @Test func primeGeneratorPrimesUpTo_small() async {

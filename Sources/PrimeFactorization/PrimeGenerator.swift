@@ -15,8 +15,12 @@ import Foundation
 /// ```
 @available(iOS 13.0, macOS 10.15, *)
 public actor PrimeGenerator {
-    private var cache: [Int: [Int]] = [:]
-    private let maxCacheSize = 10000
+    private(set) var cache: [Int: [Int]] = [:]
+    let maxCacheSize = 10000
+
+    /// Cached keys in insertion order, used as a ring buffer for FIFO eviction.
+    private var insertionOrder: [Int] = []
+    private var nextEvictionIndex = 0
 
     public init() {}
 
@@ -33,12 +37,25 @@ public actor PrimeGenerator {
             return number.primeFactors
         }.value
 
-        if cache.count >= maxCacheSize {
-            cache.removeAll(keepingCapacity: true)
+        // Another call may have cached this number while we were suspended.
+        if let cached = cache[number] {
+            return cached
+        }
+
+        store(factors, for: number)
+        return factors
+    }
+
+    /// Caches `factors`, evicting only the oldest entry when the cache is full.
+    private func store(_ factors: [Int], for number: Int) {
+        if insertionOrder.count < maxCacheSize {
+            insertionOrder.append(number)
+        } else {
+            cache.removeValue(forKey: insertionOrder[nextEvictionIndex])
+            insertionOrder[nextEvictionIndex] = number
+            nextEvictionIndex = (nextEvictionIndex + 1) % maxCacheSize
         }
         cache[number] = factors
-
-        return factors
     }
 
     /// Generates all prime numbers up to the given limit.
@@ -54,29 +71,11 @@ public actor PrimeGenerator {
             return smallPrimes.prefix(while: { $0 <= limit })
         }
 
+        // The sieve is a nonisolated free function, so it runs off the actor
+        // and does not block cache lookups while it works.
         return await Task.detached {
-            await self.sieveOfEratosthenes(limit: limit)
+            sieveOfEratosthenes(limit: limit)
         }.value
-    }
-
-    private func sieveOfEratosthenes(limit: Int) -> [Int] {
-        guard limit >= 2 else { return [] }
-
-        var isPrime = Array(repeating: true, count: limit + 1)
-        isPrime[0] = false
-        isPrime[1] = false
-
-        let sqrtLimit = Int(Double(limit).squareRoot())
-
-        for i in 2...sqrtLimit {
-            if isPrime[i] {
-                for j in stride(from: i * i, through: limit, by: i) {
-                    isPrime[j] = false
-                }
-            }
-        }
-
-        return isPrime.enumerated().compactMap { $0.element ? $0.offset : nil }
     }
 }
 

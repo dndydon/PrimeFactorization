@@ -8,10 +8,12 @@ import Foundation
 /// using generic arithmetic with overflow-safe loop bounds (`multipliedReportingOverflow`).
 ///
 /// `Int` provides optimized overrides using bit operations and branch-optimized loops.
-/// In release builds (`-O`), the compiler specializes generic code for concrete types,
-/// so performance is comparable across all conforming types.
+/// `primeFactors` and `isPrime` are protocol requirements so those overrides are used
+/// even when `Int` is accessed through a generic `T: PrimeFactorizable`.
 public protocol PrimeFactorizable: FixedWidthInteger {
     init(_ value: Int)
+    var primeFactors: [Self] { get }
+    var isPrime: Bool { get }
 }
 
 // MARK: - Conformances

@@ -2,7 +2,15 @@
 
 A Swift package providing optimized prime factorization, primality testing, and prime generation with generic type support. Works with `Int`, `Int64`, `UInt`, and any `FixedWidthInteger` conforming type.
 
-Last Updated: 2026.03.22 **v3.1**
+## Revision History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| **v3.2** | 2026-09-22 | Generic code on `Int` now uses the optimized overrides (`primeFactors`/`isPrime` are protocol requirements). `PrimeGenerator.primes(upTo:)` sieves off the actor. `primeNumbers(from:through:)` uses a segmented sieve (15M range: 38 s to 1.6 s). `PrimeGenerator` cache evicts oldest entry (FIFO) instead of clearing everything. |
+| v3.1 | 2026-03-22 | Pre-computed table of 1,000 small primes for faster trial division |
+| v3.0 | 2026-03-21 | API consolidation: unified `PrimeFactorizable` protocol, removed duplicates, optimized `Int` overrides (see `MIGRATION.md`) |
+| v2.0 | — | Namespace conflict resolution, async API consolidation |
+| v1.0 | — | Initial implementation |
 
 ## Features
 
@@ -21,12 +29,12 @@ All prime operations are available on any conforming type (`Int`, `Int64`, `UInt
 
 ### Prime Generation
 
-- **`primeNumbers(from:through:) throws -> [Int]`** - Generate primes in a range using 6k+/-1 method
+- **`primeNumbers(from:through:) throws -> [Int]`** - Generate primes in a range using a segmented sieve (6k+/-1 trial division for narrow ranges of very large numbers)
 
 ### Async Operations
 
 - **`primeFactorsConcurrent(of:) async throws -> [Int: [Int]]`** - Concurrent batch factorization
-- **`PrimeGenerator`** - Actor with cached factorization and Sieve of Eratosthenes
+- **`PrimeGenerator`** - Actor with cached factorization (FIFO eviction at 10,000 entries) and Sieve of Eratosthenes (runs off the actor)
 
 ### Formatting
 
@@ -109,6 +117,8 @@ factors.primeFactorizationString  // "2^2 x 3^3 x 5"
 - Generic types (`Int64`, `UInt`) use `multipliedReportingOverflow` for overflow-safe arithmetic
 - O(sqrt(n)) complexity for factorization and primality testing
 - `PrimeGenerator.primes(upTo:)` returns instantly from the table for limits <= 7,919
+- `primeFactors` and `isPrime` are protocol requirements, so generic code calling them on `Int` still uses the optimized overrides
+- `primeNumbers(from:through:)` uses a segmented sieve with bounded memory; the default 15M range completes in under 2 seconds in a debug build
 - In release builds, the compiler specializes generics for concrete types, closing the performance gap
 
 ## Error Handling

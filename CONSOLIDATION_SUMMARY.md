@@ -64,3 +64,4 @@ After: One `PrimeFactorizable` protocol with generic defaults for `primeFactors`
 - **v2.0** - Namespace conflict resolution, async API consolidation
 - **v3.0** - API consolidation: unified protocol, removed duplicates, optimized Int overrides
 - **v3.1** - Pre-computed small primes table for faster trial division
+- **v3.2** - Generic dispatch fix, off-actor sieve, segmented sieve for `primeNumbers`, FIFO cache eviction (see README)
