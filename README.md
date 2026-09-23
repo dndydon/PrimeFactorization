@@ -6,10 +6,11 @@ A Swift package providing optimized prime factorization, primality testing, and 
 
 | Version | Date year-mon-day | Changes |
 |---------|------|---------|
-| **v3.2** | 2026-09-22 | Generic code on `Int` now uses the optimized overrides (`primeFactors`/`isPrime` are protocol requirements). `PrimeGenerator.primes(upTo:)` sieves off the actor. `primeNumbers(from:through:)` uses a segmented sieve (15M range: 38 s to 1.6 s). `PrimeGenerator` cache evicts oldest entry (FIFO) instead of clearing everything. |
+| **v3.3** | 2026-09-23 | Shared 64-bit engine for `Int`, `Int64`, `UInt`: Miller-Rabin and Pollard-Brent rho above 7,927² (`Int.max` factors in ~0.1 ms instead of ~38 ms; `Int.max.allFactors` in µs instead of 49 s). `allFactors` built from prime factors and made a protocol requirement. Odd-only segmented sieve, also used by `PrimeGenerator.primes(upTo:)`. Fixed `primeNumbers` skipping a 6k+1 start value. Tests reorganized into 7 files mirroring the sources (debug run: 21.7 s to 1.3 s). See `CHANGES.md`. |
+| v3.2 | 2026-09-22 | Generic code on `Int` now uses the optimized overrides (`primeFactors`/`isPrime` are protocol requirements). `PrimeGenerator.primes(upTo:)` sieves off the actor. `primeNumbers(from:through:)` uses a segmented sieve (15M range: 38 s to 1.6 s). `PrimeGenerator` cache evicts oldest entry (FIFO) instead of clearing everything. |
 | v3.1 | 2026-03-22 | Pre-computed table of 1,000 small primes for faster trial division |
 | v3.0 | 2026-03-21 | API consolidation: unified `PrimeFactorizable` protocol, removed duplicates, optimized `Int` overrides (see `MIGRATION.md`) |
-| v2.0 | — | Namespace conflict resolution, async API consolidation |
+| v2.0 | 2026-03-16 | Namespace conflict resolution, async API consolidation |
 | v1.0 | — | Initial implementation |
 
 ## Features
@@ -19,7 +20,7 @@ A Swift package providing optimized prime factorization, primality testing, and 
 All prime operations are available on any conforming type (`Int`, `Int64`, `UInt`):
 
 - **`.primeFactors`**: `[Self]` - Prime factors in ascending order
-- **`.isPrime`**: `Bool` - Primality check (O(sqrt(n)) complexity)
+- **`.isPrime`**: `Bool` - Primality check (deterministic Miller-Rabin above ~62.8 million)
 - **`.allFactors`**: `[Self]` - All divisors in ascending order
 
 ### Int Conveniences
@@ -111,15 +112,15 @@ factors.primeFactorizationString  // "2^2 x 3^3 x 5"
 
 ## Performance
 
-- `Int` uses a pre-computed table of 1,000 small primes (2 through 7,919) for trial division, covering complete factorization up to ~62.7 million without the 6k+/-1 fallback
-- `trailingZeroBitCount` for fast power-of-2 extraction
-- Falls back to 6k+/-1 trial division for divisors beyond the table
-- Generic types (`Int64`, `UInt`) use `multipliedReportingOverflow` for overflow-safe arithmetic
-- O(sqrt(n)) complexity for factorization and primality testing
-- `PrimeGenerator.primes(upTo:)` returns instantly from the table for limits <= 7,919
-- `primeFactors` and `isPrime` are protocol requirements, so generic code calling them on `Int` still uses the optimized overrides
-- `primeNumbers(from:through:)` uses a segmented sieve with bounded memory; the default 15M range completes in under 2 seconds in a debug build
-- In release builds, the compiler specializes generics for concrete types, closing the performance gap
+- `Int`, `Int64`, and `UInt` share one 64-bit engine:
+  - Trial division with a pre-computed table of 1,000 small primes (2 through 7,919) fully handles values below 7,927² (~62.8 million)
+  - Above that, deterministic Miller-Rabin tests primality and Pollard-Brent rho splits composites, so 19-digit values factor in about a millisecond
+  - `trailingZeroBitCount` for fast power-of-2 extraction
+- `allFactors` is built from the prime factorization, so `Int.max.allFactors` takes microseconds instead of ~50 seconds
+- `primeFactors`, `isPrime`, and `allFactors` are protocol requirements, so generic code calling them on `Int`, `Int64`, or `UInt` uses the engine
+- Other conforming types fall back to generic 6k+/-1 trial division with `multipliedReportingOverflow` for overflow-safe arithmetic
+- `primeNumbers(from:through:)` uses an odd-only segmented sieve with bounded memory (2...15M: ~12 ms release); narrow ranges of huge values use trial division with Miller-Rabin
+- `PrimeGenerator.primes(upTo:)` returns instantly from the table for limits <= 7,919, and uses the segmented sieve above that
 
 ## Error Handling
 

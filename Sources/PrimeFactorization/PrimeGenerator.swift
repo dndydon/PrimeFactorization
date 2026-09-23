@@ -72,9 +72,10 @@ public actor PrimeGenerator {
         }
 
         // The sieve is a nonisolated free function, so it runs off the actor
-        // and does not block cache lookups while it works.
+        // and does not block cache lookups while it works. The segmented sieve
+        // keeps memory bounded regardless of `limit`.
         return await Task.detached {
-            sieveOfEratosthenes(limit: limit)
+            primesBySegmentedSieve(from: 2, through: limit)
         }.value
     }
 }

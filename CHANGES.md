@@ -1,5 +1,38 @@
 # PrimeFactorization Package - Change History
 
+## v3.3 - 64-bit Engine and Test Reorganization (September 23, 2026)
+
+### Overview
+`Int`, `Int64`, and `UInt` now share one 64-bit engine. Values below 7,927² use the small primes table; larger values use deterministic Miller-Rabin and Pollard-Brent rho, which turns multi-second near-`Int.max` work into sub-millisecond work.
+
+### Added
+- `PrimeEngine` (internal) -- Miller-Rabin with the 12 prime bases through 37, Pollard-Brent rho, 128-bit `mulMod`
+- `allFactors` protocol requirement, built from the prime factorization
+- Test suites: `PrimeFactorsTests`, `IsPrimeTests`, `FactorUtilitiesTests`, `SmallPrimesTests`, `PrimeNumbersTests`, `PrimeGeneratorTests`, `DemoTests`
+- Test-only `Int32` conformance as an independent generic trial-division oracle
+
+### Changed
+- `Int64` and `UInt` use the engine instead of generic trial division (`Int64` factoring ~11x faster)
+- Segmented sieve stores odd numbers only; `PrimeGenerator.primes(upTo:)` uses it (bounded memory)
+- Benchmark test is opt-in: `PF_BENCHMARKS=1 swift test --filter DemoTests`
+- Debug test run: 21.7 s to 1.3 s
+- `CHANGES.md` moved from the test target to the package root
+
+### Fixed
+- `primeNumbers(from:through:)` skipped a start value of the form 6k+1 on the trial-division path (e.g. `from: 7, through: 7` returned `[]`, and `Int.max - 300` was missed)
+
+---
+
+## v3.2 - Correctness and Concurrency Fixes (September 22, 2026)
+
+### Changed
+- `primeFactors` and `isPrime` are protocol requirements, so generic code on `Int` uses the optimized overrides
+- Sieve moved off the `PrimeGenerator` actor
+- `primeNumbers(from:through:)` uses a segmented sieve (2...15M: 38 s to 1.6 s, debug)
+- `PrimeGenerator` cache uses FIFO eviction instead of clearing all entries
+
+---
+
 ## v3.1 - Small Primes Table (March 22, 2026)
 
 ### Overview

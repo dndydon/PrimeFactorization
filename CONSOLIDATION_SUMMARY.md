@@ -65,3 +65,4 @@ After: One `PrimeFactorizable` protocol with generic defaults for `primeFactors`
 - **v3.0** - API consolidation: unified protocol, removed duplicates, optimized Int overrides
 - **v3.1** - Pre-computed small primes table for faster trial division
 - **v3.2** - Generic dispatch fix, off-actor sieve, segmented sieve for `primeNumbers`, FIFO cache eviction (see README)
+- **v3.3** - Shared 64-bit engine (Miller-Rabin + Pollard-Brent rho), `allFactors` from primes, odd-only segmented sieve, 6k+1 range fix, test reorganization (see CHANGES.md)

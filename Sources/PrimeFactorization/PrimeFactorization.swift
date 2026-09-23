@@ -91,13 +91,16 @@ private func primesByJump6Method(from start: Int = 5, through end: Int = 500) ->
     if start <= 2 && end >= 2 { primes.append(2) }
     if start <= 3 && end >= 3 { primes.append(3) }
 
-    var cursor = startCursor(from: start)
+    // Start at start - 2 so a 6k+1 value equal to `start` is not skipped.
+    var cursor = startCursor(from: start - 2)
 
-    while cursor <= end && cursor + 2 < Int.max - 6 {
-        [cursor, cursor + 2]
-            .filter { $0.isPrime && $0 <= end }
-            .forEach { primes.append($0) }
-        cursor += 6
+    while cursor <= end {
+        for candidate in [cursor, cursor + 2] where candidate >= start && candidate <= end && candidate.isPrime {
+            primes.append(candidate)
+        }
+        let (next, overflow) = cursor.addingReportingOverflow(6)
+        if overflow { break }
+        cursor = next
     }
 
     return primes
@@ -144,41 +147,57 @@ func sieveOfEratosthenes(limit: Int) -> [Int] {
     return isPrime.enumerated().compactMap { $0.element ? $0.offset : nil }
 }
 
-/// Returns all primes in `[start, end]` using a segmented Sieve of Eratosthenes.
+/// Returns all primes in `[start, end]` using a segmented Sieve of Eratosthenes over odd numbers.
 ///
-/// Memory is bounded by the segment size, not the range size. Offsets into each
-/// segment are used instead of absolute values so nothing overflows near `Int.max`.
-private func primesBySegmentedSieve(from start: Int, through end: Int) -> [Int] {
+/// Memory is bounded by the segment size, not the range size. Each segment stores only odd
+/// values (flag `i` is `segmentStart + 2i`), and multiples are located by offsets from the
+/// segment start so nothing overflows near `Int.max`.
+func primesBySegmentedSieve(from start: Int, through end: Int) -> [Int] {
     let low = max(start, 2)
     guard low <= end else { return [] }
 
-    let basePrimes = sieveOfEratosthenes(limit: integerSquareRoot(end))
-    let segmentSize = 1 << 18
     var primes: [Int] = []
-    var segmentStart = low
+    if low == 2 { primes.append(2) }
+
+    var segmentStart = max(low, 3) | 1
+    guard segmentStart <= end else { return primes }
+
+    let oddBasePrimes = sieveOfEratosthenes(limit: integerSquareRoot(end)).dropFirst()
+    let segmentSize = 1 << 17
+    var isComposite = [Bool](repeating: false, count: segmentSize)
 
     while true {
-        let segmentEnd = segmentStart + min(segmentSize - 1, end - segmentStart)
-        let count = segmentEnd - segmentStart + 1
-        var isComposite = [Bool](repeating: false, count: count)
+        let remainingOdds = (end - segmentStart) / 2
+        let count = min(segmentSize, remainingOdds + 1)
+        let segmentEnd = segmentStart + 2 * (count - 1)
 
-        for p in basePrimes {
-            let square = p * p
-            if square > segmentEnd { break }
-            let remainder = segmentStart % p
-            var index = max(square - segmentStart, remainder == 0 ? 0 : p - remainder)
-            while index < count {
-                isComposite[index] = true
-                index += p
+        isComposite.withUnsafeMutableBufferPointer { flags in
+            for i in 0..<count { flags[i] = false }
+            for p in oddBasePrimes {
+                let square = p * p
+                if square > segmentEnd { break }
+                // Offset of the first odd multiple of p at or after segmentStart (and p²).
+                var offset: Int
+                if square >= segmentStart {
+                    offset = square - segmentStart
+                } else {
+                    let remainder = segmentStart % p
+                    offset = remainder == 0 ? 0 : p - remainder
+                    if offset & 1 == 1 { offset += p }
+                }
+                var index = offset / 2
+                while index < count {
+                    flags[index] = true
+                    index += p
+                }
+            }
+            for i in 0..<count where !flags[i] {
+                primes.append(segmentStart + 2 * i)
             }
         }
 
-        for (offset, composite) in isComposite.enumerated() where !composite {
-            primes.append(segmentStart + offset)
-        }
-
-        if segmentEnd == end { break }
-        segmentStart = segmentEnd + 1
+        if count - 1 == remainingOdds { break }
+        segmentStart = segmentEnd + 2
     }
 
     return primes
