@@ -4,7 +4,7 @@ A Swift package providing optimized prime factorization, primality testing, and 
 
 ## Revision History
 
-| Version | Date | Changes |
+| Version | Date year-mon-day | Changes |
 |---------|------|---------|
 | **v3.2** | 2026-09-22 | Generic code on `Int` now uses the optimized overrides (`primeFactors`/`isPrime` are protocol requirements). `PrimeGenerator.primes(upTo:)` sieves off the actor. `primeNumbers(from:through:)` uses a segmented sieve (15M range: 38 s to 1.6 s). `PrimeGenerator` cache evicts oldest entry (FIFO) instead of clearing everything. |
 | v3.1 | 2026-03-22 | Pre-computed table of 1,000 small primes for faster trial division |
