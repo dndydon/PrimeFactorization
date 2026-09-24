@@ -19,31 +19,50 @@ public func demonstratePrimeFactorization() async {
     print("Prime Factorization Demo\n")
     print("=" + String(repeating: "=", count: 50))
     
+    let demoStart = CFAbsoluteTimeGetCurrent()
+    
     // Single number factorization
     print("\n1. Single Number Factorization")
     print("-" + String(repeating: "-", count: 50))
+    var sectionStart = CFAbsoluteTimeGetCurrent()
     let number = 5040
     let factors = number.primeFactors
     print("\(number) = \(factors.primeFactorizationString)")
-    print("Factors: \(factors.simpleArrayDescription)\n")
-    
+    print("Factors: \(factors.simpleArrayDescription)")
+    let singleElapsed = CFAbsoluteTimeGetCurrent() - sectionStart
+    print("Time: \(String(format: "%.6f", singleElapsed)) seconds\n")
+
     // Multiple numbers concurrently
     print("2. Concurrent Factorization")
     print("-" + String(repeating: "-", count: 50))
+    sectionStart = CFAbsoluteTimeGetCurrent()
     let numbers = [101, 1001, 1234, 2234, 3234]
     let results = try await primeFactorsConcurrent(of: numbers)
     for (num, factors) in results.sorted(by: { $0.key < $1.key }) {
       print("\(num) = \(factors.primeFactorizationString)")
     }
-    
+    let concurrentElapsed = CFAbsoluteTimeGetCurrent() - sectionStart
+    print("Time: \(String(format: "%.6f", concurrentElapsed)) seconds")
+
     // Large number
     print("\n3. Large Number Factorization")
     print("-" + String(repeating: "-", count: 50))
+    sectionStart = CFAbsoluteTimeGetCurrent()
     let largeNumber = 987654321
     let largeFactors = largeNumber.primeFactors
     print("\(largeNumber) = \(largeFactors.primeFactorizationString)")
-    print("Factors: \(largeFactors.simpleArrayDescription)\n")
-    
+    print("Factors: \(largeFactors.simpleArrayDescription)")
+    let largeElapsed = CFAbsoluteTimeGetCurrent() - sectionStart
+    print("Time: \(String(format: "%.6f", largeElapsed)) seconds\n")
+
+    let totalElapsed = CFAbsoluteTimeGetCurrent() - demoStart
+    print("=" + String(repeating: "=", count: 50))
+    print("Timing Summary")
+    print("-" + String(repeating: "-", count: 50))
+    print("  1. Single number:    \(String(format: "%8.6f", singleElapsed)) s")
+    print("  2. Concurrent:       \(String(format: "%8.6f", concurrentElapsed)) s")
+    print("  3. Large number:     \(String(format: "%8.6f", largeElapsed)) s")
+    print("  Total:               \(String(format: "%8.6f", totalElapsed)) s")
     print("=" + String(repeating: "=", count: 50))
     print("Demo completed successfully!")
     

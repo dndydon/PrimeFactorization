@@ -119,8 +119,31 @@ factors.primeFactorizationString  // "2^2 x 3^3 x 5"
 - `allFactors` is built from the prime factorization, so `Int.max.allFactors` takes microseconds instead of ~50 seconds
 - `primeFactors`, `isPrime`, and `allFactors` are protocol requirements, so generic code calling them on `Int`, `Int64`, or `UInt` uses the engine
 - Other conforming types fall back to generic 6k+/-1 trial division with `multipliedReportingOverflow` for overflow-safe arithmetic
-- `primeNumbers(from:through:)` uses an odd-only segmented sieve with bounded memory (2...15M: ~12 ms release); narrow ranges of huge values use trial division with Miller-Rabin
+- `primeNumbers(from:through:)` uses an odd-only segmented sieve with bounded memory (2...15M: ~13 ms release); narrow ranges of huge values use trial division with Miller-Rabin
 - `PrimeGenerator.primes(upTo:)` returns instantly from the table for limits <= 7,919, and uses the segmented sieve above that
+
+### Representative Demo Run Times (Apple M4 Pro, release build)
+
+From `demonstratePrimeFactorization()`:
+
+| Section | Time |
+|---------|------|
+| 1. Single number (5040) | 16 µs |
+| 2. Concurrent (5 numbers) | 36 µs |
+| 3. Large number (987,654,321) | 3 µs |
+| Total | ~0.1 ms |
+
+### Prime Generation Benchmark (Apple M4 Pro, release build)
+
+From `benchmarkPrimeGeneration()` (opt-in: `PF_BENCHMARKS=1 swift test -c release --filter DemoTests`):
+
+| Range | Primes found | Time | Memory delta | Throughput |
+|-------|--------------|------|--------------|------------|
+| 2...100,000 | 9,592 | 0.15 ms | 0.41 MB | ~666M numbers/sec |
+| 2...500,000 | 41,538 | 0.48 ms | 0.56 MB | ~1.04B numbers/sec |
+| 2...1,000,000 | 78,498 | 0.97 ms | 0.66 MB | ~1.03B numbers/sec |
+| 2...5,000,000 | 348,513 | 4.3 ms | 4.34 MB | ~1.16B numbers/sec |
+| 2...15,000,000 | 970,704 | 12.8 ms | 13.77 MB | ~1.17B numbers/sec |
 
 ## Error Handling
 
